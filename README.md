@@ -1,90 +1,131 @@
-﻿# Privruhty
+# Privruhty
 
-### Share the idea. Protect the identity.
+**Accessible privacy protection for AI conversations.**
 
-**An accessible privacy assistant for AI conversations.**
+## Inspiration
 
-Privruhty helps you spot sensitive information, replace it with consistent placeholders, and read AI responses with familiar names again. It works alongside **ChatGPT, Claude, and Gemini** through a Chrome extension, with a private composer, protected attachments, and guided review.
+AI tools like ChatGPT, Claude, and Gemini have become part of our daily lives. However, many people accidentally share sensitive information, such as their names, emails, passwords, financial records, or private documents, without realizing the risks.
 
-Built with **TypeScript, React, FastAPI, Microsoft Presidio, spaCy, Web Crypto, Gemini API integration, and Vultr deployment support**.
+We wanted to create something like Grammarly, but instead of correcting grammar, it protects your privacy when using AI.
 
-[Quick start](#quick-start) | [Demo](#try-the-demo) | [Accessibility](#built-for-inclusive-review) | [Cloud integrations](#gemini-and-vultr) | [Security](docs/security.md)
+We also realized that cybersecurity tools are not always accessible to everyone. People with motor disabilities may struggle with a mouse or keyboard, while people with cognitive disabilities may find security warnings difficult to understand.
 
-## The problem
+This inspired us to build **Privruhty**, an AI privacy assistant that not only protects sensitive information but also helps users understand why their privacy matters.
 
-A useful AI prompt can also contain a colleague's name, a customer's email, a phone number, or a credential. Removing those details manually interrupts the task, and understanding what to remove can be difficult without clear explanations.
+## What it does
 
-Privruhty brings detection, review, and reversible placeholders into the writing workflow. Users can protect a draft while preserving repeated references and decide what gets shared.
+Privruhty is a browser extension that detects and protects sensitive information before users share it with AI platforms.
 
-## How it works
+It offers several key features:
 
-1. **Write or attach.** Draft in Secure Composer, review a supported chat editor, or attach a TXT/CSV file.
-2. **Detect and review.** See highlighted findings and proposed replacements. Use individual suggestions or the guided VoiceGuard experience.
-3. **Protect.** Replace approved information with consistent placeholders such as `PERSON_1` and `EMAIL_1`. Attachment Auto-protect can hand the chat a checked copy automatically; review-first mode is also available.
-4. **Read comfortably.** Use the private reader to restore known originals inside the extension, or explicitly enable the on-page original-word switch.
+- **Live Chat Protection:** Automatically detects sensitive information while users type in AI chatboxes. Like Grammarly, it highlights private information and suggests safer replacements.
+- **Secure Composer:** Allows users to write and review private prompts in a protected editor before inserting them into an AI website.
+- **Smart Replacement:** Replaces sensitive information with consistent placeholders, such as `Alice Tan → PERSON_1`, while preserving useful context.
+- **Encrypted Word Bank:** Stores original information locally with optional AES-GCM encryption, allowing users to restore known placeholders when needed.
+- **Document Protection:** Detects sensitive information in TXT and CSV files and creates sanitized copies. It also supports whole-file encryption for private storage.
+- **VoiceGuard:** Lets users review privacy warnings through voice commands such as "Explain this," "Replace it," "Keep it," and "Undo."
+- **Easy Understand Mode:** Provides simple explanations, accessible controls, high contrast, and adjustable text size.
+- **Gemini Cybersecurity Assistant:** Designed to explain why information is sensitive, what risks it creates, and how to protect it, using only explicitly approved category and task metadata.
 
-Privruhty never clicks the chat's **Send** button. Websites may upload attachments as soon as they are attached.
+Users can review suggested changes, and Privruhty never automatically submits their messages. Attachment Auto-protect can attach checked copies automatically; users can choose review-before-attaching in Settings. Websites may upload files as soon as they are attached.
 
-## What you can do
+## How we built it
 
-| Feature                  | Experience                                                                                                                                  |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| Live privacy suggestions | Automatic scans, readable highlights, hover suggestions, and a movable review panel.                                                        |
-| Secure Composer          | Draft in an extension-owned editor, review changes, approve, then separately confirm copying or insertion.                                  |
-| Contextual detection     | Pattern checks cover structured identifiers and credentials; Presidio/spaCy adds names and contextual entities. Add custom protected terms. |
-| Encrypted word bank      | Reuse consistent placeholders within a workspace, with optional passphrase-encrypted original mappings. Credentials are never restored.     |
-| Original-word switch     | Toggle saved originals and placeholders in rendered conversations, including streaming responses.                                           |
-| Private reader           | Read restored values in an extension page or side panel, outside the chat website's DOM.                                                    |
-| Attachment protection    | Hold drops, file picks, and pasted files; scan supported text; attach protected copies with generic filenames. Source files stay unchanged. |
-| Document tools           | Review and export TXT/CSV, or encrypt/decrypt files locally using passphrase-based AES-GCM.                                                 |
-| VoiceGuard               | Review one finding at a time with keyboard controls, optional on-device voice commands, explanations, undo/redo, and explicit approval.     |
+We built Privruhty using a combination of browser extension development, natural language processing, encryption, and accessible interface design.
 
-### Built for inclusive review
+- **TypeScript and React:** Used to develop the Chrome extension, Grammarly-style interface, privacy review panel, and Secure Composer.
+- **Python and FastAPI:** Power the local backend for sensitive-information detection and processing.
+- **Microsoft Presidio and spaCy:** Identify personal information such as names, organizations, and locations.
+- **Regular Expressions:** Detect structured data such as emails, phone numbers, credit cards, and common API credentials.
+- **AES-GCM Encryption:** Protects locally stored replacement mappings and encrypted files.
+- **Browser Speech APIs:** Provide voice commands and spoken explanations when supported on the user's device.
+- **Google Gemini API:** Provides an optional integration for simple cybersecurity explanations based on approved metadata, without receiving the original sensitive information.
+- **Vultr:** Added a Docker Compose deployment setup for running the detection backend on Vultr behind HTTPS, with two preloaded detector workers. Cloud detection is optional and requires consent to send original scanned text to the configured server. Word-bank encryption and restoration remain in the extension.
 
-Privruhty's Coder for Good focus is helping more people understand and control privacy decisions. VoiceGuard offers simple explanations, one-item review, adjustable text, high contrast, visible keyboard focus, and screen-reader status announcements. Keyboard controls remain available when speech is unavailable.
+We focused on local processing by default, explicit consent for optional cloud features, and a protection process that is simple and easy to use.
 
-Voice recognition requires supported on-device English recognition and a local language pack. It starts only after a user action and has no remote recognition fallback. Optional spoken output uses local voices. Human accessibility testing and real microphone validation remain future validation work; automated checks are not a WCAG certification.
+## Challenges we ran into
 
-## Gemini and Vultr
+One of our biggest challenges was **protecting sensitive information without changing the meaning of the user's request**.
 
-### Gemini: explain the privacy decision
+For example, replacing someone's name with `PERSON_1` usually works well when writing an email. However, replacing a salary with `AMOUNT_1` could prevent the AI from correctly calculating a total or comparing financial information.
 
-The optional Gemini integration explains detected risks, replacement strategies, phishing concerns, and correctness tradeoffs. Requests contain only explicitly approved category/task/strategy/topic metadata. Original drafts, documents, mappings, audio, and transcripts are excluded from the explanation request. Structured responses are validated; local lessons remain available when Gemini is disabled or unavailable.
+Another challenge was integrating our privacy assistant into AI websites. Their chatboxes use different structures, so we needed to make sure our suggestions and review panel worked without interfering with normal typing.
 
-Configure backend-only `GEMINI_API_KEY` and `GEMINI_MODEL`, enable Gemini education in Settings, and approve metadata disclosure in the review. See [Gemini integration](docs/sponsors/gemini-api.md) and [configuration instructions](docs/voiceguard.md).
+We also faced challenges with reversible placeholders. We wanted users to restore their original words locally without accidentally exposing those words to the external AI website.
 
-### Vultr: run the detector on your server
+Accessibility introduced additional challenges. Voice recognition is not always processed locally, so we designed VoiceGuard to avoid silently switching to cloud recognition. We also made sure users could navigate the privacy review without relying on voice commands.
 
-The included Vultr deployment runs the FastAPI detector behind Caddy HTTPS using Docker Compose. Two workers preload the detection model. Extension Settings provides a cloud endpoint, separate token, explicit consent, and a connection test with round-trip timing. Local detection remains the default.
+We also considered how to integrate cloud infrastructure with clear privacy boundaries. Local detection remains the default. The optional Vultr deployment moves detection to a user-configured HTTPS server, so the interface explicitly explains that original scanned text leaves the device in cloud mode. No live deployment or speed improvement has been verified.
 
-Cloud scanning sends original scanned text and custom terms to your configured server. Word-bank encryption and restoration stay in the extension. See [deployment and connection instructions](docs/sponsors/vultr.md).
+Finally, we needed to balance strong security features with a simple interface that users without technical knowledge could understand.
 
-![Privruhty cloud settings with synthetic test configuration](docs/images/vultr-cloud-settings.png)
+## Accomplishments that we're proud of
 
-**Integration status:** Gemini code and Vultr deployment configuration are implemented. Live Gemini requests, a running Vultr deployment, and cloud speed improvements have not been verified. Credentials are supplied by the operator and are not bundled in this repository.
+We are proud that Privruhty is more than just a concept. We built and tested a working privacy assistant with several connected features.
 
-## Quick start
+Our biggest accomplishments include:
 
-**Requirements:** Desktop Chrome, Node.js 22.20+ within the supported range in `extension/package.json`, npm, and Python 3.11 or 3.12. Gemini and Vultr accounts are optional for the local demo.
+- Developing a Grammarly-style privacy protection interface for AI chatboxes.
+- Building automatic sensitive-information detection using local rules and NLP.
+- Creating a Secure Composer that lets users review information before sharing it.
+- Implementing reversible placeholders and an encrypted local word bank.
+- Adding document sanitization and whole-file encryption.
+- Building VoiceGuard with voice-command support and accessible review controls.
+- Creating Easy Understand Mode to make cybersecurity warnings easier to understand.
+- Designing Gemini-assisted cybersecurity education without sharing original private information.
+- Implementing optional cloud-detector settings and a Vultr deployment configuration with HTTPS, authentication, and explicit consent for remote scanning.
 
-### 1. Clone and start the detector
+We are especially proud of combining **cybersecurity and accessibility** in one project. Privruhty helps users protect their information while teaching them how to make safer decisions online.
 
-Run in Windows PowerShell:
+## What we learned
+
+We learned that privacy protection is not as simple as replacing names, emails, or numbers.
+
+Different types of information require different protection strategies. Removing too much information can make an AI response incorrect, while removing too little may still expose confidential details.
+
+We also learned that privacy has to be considered throughout the entire application. Even displaying restored information on an external website can introduce risks, which is why we developed an extension-owned private reading option.
+
+Another important lesson was that **security only works when people can understand and use it**.
+
+By developing VoiceGuard and Easy Understand Mode, we saw how accessible design can help make cybersecurity more practical for everyone.
+
+We also learned that cloud infrastructure needs a carefully defined role in privacy-focused applications. Public security services can be hosted externally, while remote detection requires users to trust their configured server and understand what data it receives.
+
+## What's next for Privruhty
+
+Our next goal is to make Privruhty more reliable, accessible, and useful across different AI platforms.
+
+We plan to:
+
+- Improve sensitive-information detection and reduce false positives.
+- Expand support for additional document formats, including PDF and DOCX.
+- Improve context-aware replacements for numbers, dates, and financial information.
+- Complete live testing of the Gemini cybersecurity assistant.
+- Test VoiceGuard with real users and different accessibility needs.
+- Expand compatibility with more AI websites and browsers.
+- Deploy and benchmark the Vultr detection backend, and explore a separate public privacy-rule update service.
+- Develop stronger privacy protections for confidential business information.
+- Evaluate how well Privruhty prevents information leakage while preserving AI answer quality.
+
+In the future, we hope Privruhty can become a universal privacy assistant that works across AI websites and applications.
+
+**Our goal is simple: Make AI safer and more accessible for everyone.**
+
+---
+
+## Run the project
+
+Requirements: desktop Chrome, Node.js 22.20+ within the supported range in `extension/package.json`, and Python 3.11 or 3.12. From a cloned repository, run in Windows PowerShell:
 
 ```powershell
-git clone https://github.com/Abulala1/privruhty.git
-Set-Location privruhty
 py -3.11 -m venv backend/.venv
 & ./backend/.venv/Scripts/python.exe -m pip install -r backend/requirements.txt
 & ./backend/.venv/Scripts/python.exe -m spacy download en_core_web_sm
 & ./backend/.venv/Scripts/python.exe -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8765
 ```
 
-Leave the terminal running. On first startup, the service creates `%USERPROFILE%/.pribruhty-token`. Copy that token into Privruhty Settings; keep it out of commits and recordings. The legacy token filename is retained for compatibility.
-
-### 2. Build and load the extension
-
-In a second terminal at the repository root:
+Leave that terminal running. In another terminal at the repository root:
 
 ```powershell
 Set-Location extension
@@ -92,79 +133,16 @@ npm ci
 npm run build
 ```
 
-1. Open `chrome://extensions` and enable **Developer mode**.
-2. Choose **Load unpacked** and select the repository's `extension/dist` folder.
-3. Open Privruhty **Settings**, save the local service token, and select **Test connection**.
-4. Refresh existing chat tabs. Repeat this after rebuilding or reloading the extension.
+Enable Developer mode at `chrome://extensions` and load the repository's `extension/dist` folder. In Privruhty Settings, enter the token created at `%USERPROFILE%/.pribruhty-token`, save, and test the connection. The legacy token filename is retained for compatibility. Refresh chat tabs after reloading the extension. See [CONTRIBUTING.md](CONTRIBUTING.md) for development and tests.
 
-Without a connected detector, limited on-device checks still cover common structured identifiers; contextual names may be missed.
+Use [attachment-test.txt](test-data/attachment-test.txt) for a synthetic file demo. Automatic attachment replacement supports UTF-8 TXT/CSV up to 1 MB each, five files per batch. PDF/DOCX replacement is future work; whole-file encryption supports files up to 10 MB.
 
-## Try the demo
+## Integration and validation status
 
-Use only synthetic information during the demo.
+The current version passes **32 extension unit tests, 12 backend tests, and 13 Chromium integration tests**. Browser tests use isolated synthetic chat pages; speech and provider responses are simulated in labelled tests. Live Gemini usage, Vultr deployment, real microphone accuracy, and human accessibility validation remain to be verified.
 
-### Protect a draft and restore familiar words
+Gemini is optional and requires backend credentials and per-review metadata consent. Vultr deployment files are included; cloud scanning requires an HTTPS server, a token, and explicit consent to send original text. Credentials are not bundled in this repository.
 
-1. Open **Composer** and enter: `Write an email to Alice Tan at alice@example.com.`
-2. Wait for suggestions, review the findings, and approve the changes. Name detection requires the configured contextual detector.
-3. Choose **Approve Draft**, then separately confirm copy or insertion into a supported chat. Send the message yourself after checking it.
-4. Open **Private reader beside chat** to view saved originals inside the extension. Alternatively, explicitly choose **Show originals** on the page and switch back with **Show placeholders**.
-5. Try the guided VoiceGuard review with keyboard controls and its explanation options.
+The on-page original-word switch exposes restored values to the website. Use the extension-owned private reader for stronger separation. Detection may miss information; use Secure Composer for confidential drafts because websites can observe text entered in their editors.
 
-Mappings belong to a chat path, document, or private composer workspace. Select the matching workspace if a new chat URL changes after submission. Save the word bank with a passphrase if you want encrypted persistence; worker restarts lock saved banks, temporary mappings can be lost, and sessions expire after eight hours.
-
-### Protect an attachment
-
-1. Use [attachment-test.txt](test-data/attachment-test.txt), which contains fictional information.
-2. Drop it into a supported chat. Privruhty holds the original event while checking the file.
-3. Inspect the attached `protected-document-1.txt`: the test email should become `EMAIL_1`, and the phone should become `PHONE_1` in a fresh workspace. Existing mappings can change the numeric suffix.
-4. Choose **Settings > Attachment handling > Review before attaching** to require approval before hand-off.
-
-Automatic replacement supports **UTF-8 TXT/CSV, up to 1 MB per file and five files per batch**. Unsupported formats, unsafe scan results, and failed scans stay held. If a website rejects scripted attachment, download the checked copies and attach them manually. Live website behavior may vary.
-
-The Documents page also supports local encryption/decryption of any file format up to **10 MB**. Encrypted files are for private storage or transfer; ordinary AI tools cannot read them. PDF, DOCX, and image text replacement is not implemented.
-
-## Architecture
-
-```mermaid
-flowchart LR
-    A[Composer / chat / TXT or CSV] --> B[Extension detection and review]
-    B --> C[Local detector or consented HTTPS server]
-    C --> D[FastAPI + Presidio + spaCy]
-    D --> B
-    B --> E[Scoped word bank]
-    E --> F[Encrypted local persistence]
-    E --> G[Private reader / optional original-word switch]
-    B --> H[Protected text or attachment copy]
-    B -->|Approved category metadata| I[Optional Gemini education]
-```
-
-| Directory       | Contents                                                                                   |
-| --------------- | ------------------------------------------------------------------------------------------ |
-| `extension/`    | Chrome Manifest V3, React/TypeScript UI, VoiceGuard, word bank, attachment guard, tests    |
-| `backend/`      | FastAPI detector, Presidio/spaCy integration, Gemini education endpoint, tests, Dockerfile |
-| `deploy/vultr/` | Docker Compose, HTTPS proxy, and environment configuration template                        |
-| `test-data/`    | Clearly labelled synthetic demo files                                                      |
-| `docs/`         | Architecture, security boundaries, research, and integration guides                        |
-
-## Verification
-
-The current version passes **32 extension unit tests, 12 backend tests, and 13 Chromium integration tests**. The browser suite loads the real extension with isolated synthetic chat pages and checks outgoing attachment bytes, protected text, encryption, review controls, streaming restoration, and extension reload behavior. Speech/provider responses are simulated in labelled tests.
-
-GitHub Actions runs formatting, linting, tests, and the extension build. See [CONTRIBUTING.md](CONTRIBUTING.md) for commands. Live chat layouts, live cloud services, real microphone accuracy, and human screen-reader experience require separate verification.
-
-## Privacy boundaries
-
-- Sites can observe text typed in their own editors. Use **Secure Composer** for confidential drafts.
-- **Show originals on the page exposes restored values to that website.** Use the extension-owned private reader for stronger separation.
-- Detection can miss information, and context can identify someone even after replacement. Replacing exact numbers can also change calculations.
-- Attachment interception is a best-effort browser event guard, not a system-wide data-loss prevention boundary.
-- Lost passphrases and expired or deleted mappings cannot be recovered. Local malware, compromised browser profiles, screenshots, and clipboard exposure are outside this tool's protection.
-
-Read the [security model](docs/security.md) before using real confidential information.
-
-## Project notes
-
-Privruhty combines practical privacy controls with explanations that help users understand their choices. Next steps include broader document support, live-site compatibility testing, human accessibility testing, and measured cloud performance.
-
-[Architecture](docs/architecture.md) | [Project description](docs/devpost.md) | [Coder for Good](docs/sponsors/coder-for-good.md) | [Gemini API](docs/sponsors/gemini-api.md) | [Vultr](docs/sponsors/vultr.md) | [Related work](docs/similar-projects.md)
+[Architecture](docs/architecture.md) | [Security](docs/security.md) | [VoiceGuard setup](docs/voiceguard.md) | [Gemini](docs/sponsors/gemini-api.md) | [Vultr](docs/sponsors/vultr.md)
