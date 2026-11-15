@@ -7,8 +7,3 @@ Mailing address: 123 Example Street, Springfield, IL 62704
 Company: Example Company
 
 The appointment is next Tuesday at 10 AM. Please keep the reminder friendly.
-
-Test notes:
-The protected attachment should replace the email and phone with placeholders.
-Name and address detection depend on the local detection service and its configuration.
-The original file on disk should remain unchanged.
