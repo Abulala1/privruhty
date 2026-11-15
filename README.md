@@ -100,18 +100,12 @@ Our next goal is to make Privruhty more reliable, accessible, and useful across 
 We plan to:
 
 - Improve sensitive-information detection and reduce false positives.
-- Expand support for additional document formats, including PDF and DOCX.
-- Improve context-aware replacements for numbers, dates, and financial information.
-- Complete live testing of the Gemini cybersecurity assistant.
 - Test VoiceGuard with real users and different accessibility needs.
 - Expand compatibility with more AI websites and browsers.
-- Deploy and benchmark the Vultr detection backend, and explore a separate public privacy-rule update service.
 - Develop stronger privacy protections for confidential business information.
 - Evaluate how well Privruhty prevents information leakage while preserving AI answer quality.
 
 In the future, we hope Privruhty can become a universal privacy assistant that works across AI websites and applications.
-
-**Our goal is simple: Make AI safer and more accessible for everyone.**
 
 ---
 
