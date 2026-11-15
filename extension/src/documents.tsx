@@ -169,7 +169,7 @@ function App() {
               ? 'TXT and CSV · up to 1 MB · UTF-8'
               : mode === 'encrypt'
                 ? 'Any format · up to 10 MB · local AES-GCM encryption'
-                : 'Pribruhty encrypted files · passphrase required'}
+                : 'Privruhty encrypted files · passphrase required'}
           </p>
           <label
             className="dropzone"

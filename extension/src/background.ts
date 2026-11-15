@@ -158,7 +158,7 @@ async function run(message: any, sender: chrome.runtime.MessageSender) {
     if (!sourceScope)
       throw new Error(
         scopes.length
-          ? 'Choose this chat’s workspace in the Pribruhty popup.'
+          ? 'Choose this chat’s workspace in the Privruhty popup.'
           : 'No saved originals. Open Word bank to check your mappings.',
       );
     pageGrants.set(tabId!, { pageScope: scope, sourceScope });
@@ -217,7 +217,7 @@ async function run(message: any, sender: chrome.runtime.MessageSender) {
   }
   // Full bank access is reserved for extension pages. On-page restoration above
   // requires an explicit per-tab, per-conversation grant from the popup.
-  if (!ui) throw new Error('This action is available only inside Pribruhty.');
+  if (!ui) throw new Error('This action is available only inside Privruhty.');
   if (message.kind === 'page-view-info' || message.kind === 'page-view-set') {
     if (!Number.isInteger(message.tabId)) throw new Error('Open a supported AI chat tab.');
     const tab = await chrome.tabs.get(message.tabId);

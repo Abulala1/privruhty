@@ -30,7 +30,7 @@ export function Shell({
       <header className="topbar">
         <a className="logo" href="composer.html">
           <Shield />
-          Pribruhty
+          Privruhty
         </a>
         <span className="local-badge">
           <i /> On your device

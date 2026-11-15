@@ -1,6 +1,6 @@
-# Pribruhty: accessible privacy protection for AI
+# Privruhty: accessible privacy protection for AI
 
-Pribruhty helps people review sensitive information before sharing prompts and documents with AI services. Its Chrome extension combines Grammarly-style highlights, a Secure Composer, an encrypted local word bank, reversible placeholders, and document protection.
+Privruhty helps people review sensitive information before sharing prompts and documents with AI services. Its Chrome extension combines Grammarly-style highlights, a Secure Composer, an encrypted local word bank, reversible placeholders, and document protection.
 
 ## How it works
 

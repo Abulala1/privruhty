@@ -294,8 +294,8 @@ function mount() {
   shield = document.createElement('button');
   shield.type = 'button';
   shield.textContent = '🛡';
-  shield.title = 'Pribruhty review';
-  shield.setAttribute('aria-label', 'Open Pribruhty review');
+  shield.title = 'Privruhty review';
+  shield.setAttribute('aria-label', 'Open Privruhty review');
   css(shield, {
     position: 'fixed',
     zIndex: '2147483646',
@@ -371,7 +371,7 @@ function showReview() {
   panel = document.createElement('div');
   panel.id = 'pribruhty-ui';
   panel.setAttribute('role', 'dialog');
-  panel.setAttribute('aria-label', 'Pribruhty privacy review');
+  panel.setAttribute('aria-label', 'Privruhty privacy review');
   baseCard(panel);
   css(panel, { overflowY: 'auto' });
   document.documentElement.append(panel);
@@ -422,7 +422,7 @@ function showReview() {
     paddingBottom: '10px',
     marginBottom: '10px',
   });
-  const handle = node('button', `⠿  Pribruhty · ${result.spans.length} suggestions`, header);
+  const handle = node('button', `⠿  Privruhty · ${result.spans.length} suggestions`, header);
   handle.type = 'button';
   css(handle, {
     flex: '1',
@@ -532,7 +532,7 @@ function showReview() {
     );
   const footer = node(
     'p',
-    'Changes need your approval. Pribruhty never sends your message.',
+    'Changes need your approval. Privruhty never sends your message.',
     panel,
   );
   css(footer, { fontSize: '11px', color: '#6b7c61', margin: '10px 0 0' });
@@ -565,7 +565,7 @@ function showSuggestion(index: number, anchor: DOMRect) {
   popup = document.createElement('div');
   popup.id = 'pribruhty-suggestion';
   popup.setAttribute('role', 'dialog');
-  popup.setAttribute('aria-label', 'Pribruhty suggestion');
+  popup.setAttribute('aria-label', 'Privruhty suggestion');
   baseCard(popup);
   css(popup, {
     width: Math.min(320, innerWidth - 24) + 'px',
@@ -843,7 +843,7 @@ contentRuntime.onInvalidated(() => {
       font: '12px/1.5 system-ui',
       boxShadow: '0 4px 16px #0003',
     });
-    node('span', 'Pribruhty updated. Refresh this tab to reconnect.', notice);
+    node('span', 'Privruhty updated. Refresh this tab to reconnect.', notice);
     const refresh = actionButton('Refresh tab', notice);
     refresh.onclick = () => location.reload();
     document.documentElement.append(notice);

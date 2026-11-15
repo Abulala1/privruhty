@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 from .core import plan, sanitize_txt, sanitize_csv
 from .explanations import ExplanationRequest, explain
 
-app = FastAPI(title="Pribruhty Local Service", docs_url=None, redoc_url=None)
+app = FastAPI(title="Privruhty Local Service", docs_url=None, redoc_url=None)
 TOKEN_PATH = Path.home() / ".pribruhty-token"
 if not TOKEN_PATH.exists():
     TOKEN_PATH.write_text(secrets.token_urlsafe(32), encoding="ascii")
@@ -90,6 +90,6 @@ async def document(file: UploadFile = File(...), custom: str = Form("")):
         media_type="text/plain" if ext == ".txt" else "text/csv",
         headers={
             "Content-Disposition": f'attachment; filename="protected-{name}"',
-            "X-Pribruhty-Count": str(len(result["spans"])),
+            "X-Privruhty-Count": str(len(result["spans"])),
         },
     )

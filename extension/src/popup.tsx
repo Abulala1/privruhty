@@ -52,7 +52,7 @@ function App() {
       <div className="section-heading">
         <a className="logo" href="#">
           <Shield />
-          Pribruhty
+          Privruhty
         </a>
         <span className="local-badge">
           <i /> Local

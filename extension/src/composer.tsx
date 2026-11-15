@@ -240,7 +240,7 @@ function App() {
                   Open an AI chat and reload this composer to enable insertion.
                 </p>
               )}
-              <p className="muted">Pribruhty never submits your message.</p>
+              <p className="muted">Privruhty never submits your message.</p>
             </>
           )}
           {status && (

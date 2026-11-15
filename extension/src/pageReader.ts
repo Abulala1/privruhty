@@ -150,7 +150,7 @@ export class PageReader {
     }
     this.toolbar = document.createElement('div');
     this.toolbar.id = 'pribruhty-page-view';
-    this.toolbar.setAttribute('aria-label', 'Pribruhty on-page reading mode');
+    this.toolbar.setAttribute('aria-label', 'Privruhty on-page reading mode');
     Object.assign(this.toolbar.style, {
       all: 'initial',
       display: 'flex',

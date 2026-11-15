@@ -5,6 +5,8 @@ export type Envelope = {
   iv: string;
   ciphertext: string;
 };
+// Version 1 authenticated-data labels retain their original spelling so existing
+// encrypted banks and files remain decryptable after the Privruhty rename.
 const iterations = 310_000;
 const encode = new TextEncoder();
 export function toBase64(bytes: Uint8Array) {

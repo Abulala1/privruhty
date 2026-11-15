@@ -257,11 +257,11 @@ test('encrypted word bank, familiar reading view, and actual protected chat text
     const chat = await context.newPage();
     await chat.goto('https://chatgpt.com/c/synthetic');
     await chat.getByRole('textbox').focus();
-    await expect(chat.getByRole('button', { name: 'Open Pribruhty review' })).toBeVisible();
+    await expect(chat.getByRole('button', { name: 'Open Privruhty review' })).toBeVisible();
     await expect(chat.locator('#pribruhty-ui')).toContainText('bob@example.com');
     // Automatic scanning and suggestion display must not change the draft.
     await expect(chat.getByRole('textbox')).toHaveText('Email bob@example.com');
-    await chat.getByRole('button', { name: 'Open Pribruhty review' }).click();
+    await chat.getByRole('button', { name: 'Open Privruhty review' }).click();
     await expect(chat.locator('#pribruhty-ui')).toContainText('bob@example.com');
     await chat.getByRole('button', { name: 'Apply selected changes' }).click();
     await expect(chat.getByRole('textbox')).toHaveText('Email EMAIL_1');
@@ -652,7 +652,7 @@ test('extension reload shuts down stale content scripts without uncaught invalid
       'Hello Alice Tan.',
     );
     await chat.getByRole('textbox').focus();
-    await expect(chat.getByRole('button', { name: 'Open Pribruhty review' })).toBeVisible();
+    await expect(chat.getByRole('button', { name: 'Open Privruhty review' })).toBeVisible();
     await worker.evaluate(() => chrome.runtime.reload()).catch(() => {});
     // Force an input callback in the old isolated world after invalidation.
     await chat.getByRole('textbox').fill('Email bob@example.com');
@@ -687,7 +687,7 @@ test('extension reload shuts down stale content scripts without uncaught invalid
       )
       .toBe(true);
     await chat.getByRole('textbox').fill('Email dave@example.com');
-    await expect(chat.getByRole('button', { name: 'Open Pribruhty review' })).toBeVisible();
+    await expect(chat.getByRole('button', { name: 'Open Privruhty review' })).toBeVisible();
     expect(errors.filter((error) => /context invalidated/i.test(error))).toEqual([]);
   } finally {
     await context.close();

@@ -2,7 +2,7 @@
 
 ## Purpose and design
 
-Pribruhty helps users make privacy decisions before using AI. Optional hands-free review addresses motor access needs. Easy Understand Mode offers short explanations, one item at a time, progress, repeat, and previous controls without decision time limits. Users choose preferences; no disability diagnosis is inferred.
+Privruhty helps users make privacy decisions before using AI. Optional hands-free review addresses motor access needs. Easy Understand Mode offers short explanations, one item at a time, progress, repeat, and previous controls without decision time limits. Users choose preferences; no disability diagnosis is inferred.
 
 Composer, document review, and the inline panel share the existing detector, mappings, and VoiceGuard review component. Fixed local voice commands navigate, explain, replace, keep, undo/redo, approve, and cancel. A model never executes commands. Speech requires on-device recognition with no cloud fallback. Keyboard controls remain available.
 

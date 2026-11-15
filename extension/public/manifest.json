@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Pribruhty",
+  "name": "Privruhty",
   "version": "0.2.0",
   "description": "Review sensitive text before sending it to AI chats.",
   "permissions": ["storage", "activeTab", "sidePanel"],

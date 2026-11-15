@@ -1,8 +1,8 @@
-# Pribruhty
+# Privruhty
 
 **Accessible privacy protection for AI conversations.**
 
-Pribruhty is a Chrome extension with a local Python detection service. It helps you review sensitive information, replace it with consistent placeholders, and choose what to share with ChatGPT, Claude, or Gemini. VoiceGuard adds accessible review and optional metadata-only Gemini explanations.
+Privruhty is a Chrome extension with a local Python detection service. It helps you review sensitive information, replace it with consistent placeholders, and choose what to share with ChatGPT, Claude, or Gemini. VoiceGuard adds accessible review and optional metadata-only Gemini explanations.
 
 ## Features
 
@@ -59,7 +59,7 @@ npm ci
 npm run build
 ```
 
-Open `chrome://extensions`, enable **Developer mode**, choose **Load unpacked**, and select `extension/dist`. Open Pribruhty Settings, enter the local-service token, save, and choose **Test connection**.
+Open `chrome://extensions`, enable **Developer mode**, choose **Load unpacked**, and select `extension/dist`. Open Privruhty Settings, enter the local-service token, save, and choose **Test connection**.
 
 After every extension rebuild/reload, refresh existing AI chat tabs. Old content scripts display a refresh notice when their extension context expires.
 
@@ -81,6 +81,8 @@ The inline review's **Accessible VoiceGuard review** opens the same guided exper
 Mappings are scoped to each chat path, private composer, or document. Saved banks use AES-256-GCM, PBKDF2-SHA256, and fresh random salts/nonces. The unlock key is held only in service-worker memory. Restarting the worker locks a saved bank; temporary mappings can be lost. Sessions expire after eight hours. Expired/deleted mappings cannot reconstruct old originals. A new chat URL may require selecting the workspace used before its URL changed.
 
 ### Files
+
+Direct drag-to-chat file interception is not implemented yet. See the [source-backed attachment protection research](docs/attachment-protection-research.md) for the proposed automatic hold, sanitize, and reattach workflow.
 
 - **Replace sensitive text:** review UTF-8 TXT/CSV files up to 1 MB, approve, and download a protected copy. The source is unchanged. Replacing numeric cells can invalidate calculations.
 - **Encrypt / Decrypt:** protect files of any format up to 10 MB. Encryption includes the filename and content. A lost passphrase cannot be recovered; ordinary AI tools cannot analyse the encrypted file.
@@ -105,7 +107,7 @@ The browser suite loads the real extension in isolated Chromium with synthetic w
 - A website may already observe anything typed in its editor. Use Secure Composer for confidential drafts.
 - **On-page original-word mode exposes restored values to the website.** The extension-owned private reader provides a stronger separation.
 - Detection can miss information or misclassify it. Placeholders do not guarantee anonymity; context can still identify someone.
-- The extension does not block the host site's Send action. Approval controls apply to Pribruhty's own workflow.
+- The extension does not block the host site's Send action. Approval controls apply to Privruhty's own workflow.
 - Word banks are scoped by chat path, not authenticated organization/account identity.
 - Local malware, browser-profile compromise, screenshots, and clipboard exposure are outside this tool's protection.
 - Real microphone, human accessibility, and live Gemini validation require the corresponding device, users, and credentials. Sponsor eligibility and deployment are not implied.
