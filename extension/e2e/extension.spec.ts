@@ -497,7 +497,7 @@ test('readable dark-theme highlights, draggable review, and hover approval for i
     await command.fill('next');
     await command.press('Enter');
     await expect(speechReview.getByRole('heading', { level: 3 })).toContainText('PHONE');
-    await command.fill('changed');
+    await command.fill('Change changed');
     await command.press('Enter');
     await expect(editor).toContainText('PHONE_1');
     await expect(editor).not.toContainText('415-555-0199');

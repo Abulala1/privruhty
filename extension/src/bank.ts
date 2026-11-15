@@ -1,4 +1,5 @@
 import { apply, type Scan } from './core';
+import { categories } from './voiceguard';
 export type Entry = {
   id: string;
   scope: string;
@@ -44,7 +45,21 @@ export function includeKnownTerms(
   return { ...result, spans: spans.sort((a, b) => a.start - b.start) };
 }
 export function assignMappings(result: Scan, text: string, scope: string, entries: Entry[]): Scan {
-  const spans = result.spans.map((span) => {
+  const tokens = [
+    ...text.matchAll(
+      new RegExp(
+        `(?<![A-Za-z0-9_])(?:${categories.join('|')}|DATE|IP_ADDRESS|AMOUNT)_\\d+(?![A-Za-z0-9_])`,
+        'g',
+      ),
+    ),
+  ].map((match) => ({ start: match.index!, end: match.index! + match[0].length }));
+  const actionable = result.spans.filter(
+    (span) =>
+      span.strategy !== 'PSEUDONYM' ||
+      (text.slice(span.start, span.end) !== span.replacement &&
+        !tokens.some((token) => span.start >= token.start && span.end <= token.end)),
+  );
+  const spans = actionable.map((span) => {
     if (span.strategy !== 'PSEUDONYM' || secretType(span.type)) return span;
     const original = text.slice(span.start, span.end);
     if (

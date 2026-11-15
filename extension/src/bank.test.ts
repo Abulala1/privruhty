@@ -2,6 +2,34 @@ import { describe, it, expect } from 'vitest';
 import { assignMappings, includeKnownTerms, restoreParts, type Entry } from './bank';
 import { fallback } from './core';
 describe('word bank and private restoration', () => {
+  it('does not suggest replacing protected tokens again or retain no-op findings', () => {
+    const text = 'Hi LOCATION_1 at alice@example.com';
+    const result = fallback(text);
+    result.spans.unshift({
+      start: 3,
+      end: 11,
+      type: 'LOCATION',
+      confidence: 0.85,
+      replacement: 'LOCATION_2',
+      strategy: 'PSEUDONYM',
+      reason: 'False NLP detection',
+    });
+    result.spans.unshift({
+      start: 3,
+      end: 13,
+      type: 'LOCATION',
+      confidence: 1,
+      replacement: 'LOCATION_1',
+      strategy: 'PSEUDONYM',
+      reason: 'Already protected',
+    });
+    const entries: Entry[] = [];
+    const scan = assignMappings(result, text, 'a', entries);
+    expect(scan.spans).toHaveLength(1);
+    expect(scan.spans[0].type).toBe('EMAIL');
+    expect(scan.protected).toBe('Hi LOCATION_1 at EMAIL_1');
+    expect(entries.map((entry) => entry.original)).toEqual(['alice@example.com']);
+  });
   it('restores placeholders beside Chinese text and translation markup text', () => {
     const entries: Entry[] = [
       {

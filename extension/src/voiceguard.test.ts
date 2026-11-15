@@ -65,6 +65,10 @@ it('accepts inflections and close pronunciations only as short replacement comma
     'a play',
     're place',
     'uh changed please',
+    'change changed',
+    'change change',
+    'apply applied',
+    'change. Changed.',
   ])
     expect(parseCommand(phrase), phrase).toEqual({ action: 'replace', applyCurrent: true });
   for (const phrase of [
@@ -77,6 +81,8 @@ it('accepts inflections and close pronunciations only as short replacement comma
     'please send this',
     'approv',
     'change alice@example.com',
+    'change no change',
+    'change next',
   ])
     expect(parseCommand(phrase), phrase).toBeNull();
 });

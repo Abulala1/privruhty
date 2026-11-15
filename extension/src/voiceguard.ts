@@ -145,6 +145,17 @@ export function parseCommand(value: string): Command | null {
   if (applyPhrases.includes(text)) return { action: 'replace', applyCurrent: true };
   if (text === 'next item' || text === 'go next') return { action: 'next' };
   if (commands[text]) return { action: commands[text] };
+  const repeated = text.split(/[\s,;.!?]+/).filter(Boolean);
+  if (
+    repeated.length >= 2 &&
+    repeated.length <= 4 &&
+    approximateReplacement(repeated[0]) &&
+    repeated.every(
+      (word) => approximateReplacement(word) || ['it', 'this', 'now'].includes(word),
+    ) &&
+    repeated.filter(approximateReplacement).length >= 2
+  )
+    return { action: 'replace', applyCurrent: true };
   if (approximateReplacement(text)) return { action: 'replace', applyCurrent: true };
   if (questions[text]) return { action: 'explain', intent: questions[text] };
   const numbered = /^explain (?:the )?(first|second|third|fourth|fifth|\d+)(?: one| item)?$/.exec(
