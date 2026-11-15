@@ -88,3 +88,5 @@ The spoken **change** command previously only selected a preview replacement. In
 ### Easier commands
 
 Say **apply it**, **apply**, **replace**, or **change this** to approve the current inline replacement. **Next item** advances without changing text. Polite forms such as **please apply it** are accepted. Full-command matching rejects negated and unrelated sentences. Supported local engines receive moderate command phrase hints; unsupported hints are disabled without switching to remote recognition. The temporary Heard display helps diagnose recognition mistakes.
+
+Short replacement commands now accept **changed**, **applied**, and close spellings/pronunciations. Matching tolerates one character insertion, deletion, substitution, or adjacent transposition in the replacement verb, plus specific split pronunciations such as **a ply**. Only a short verb with an optional **it**, **this**, or **now** is eligible; arbitrary sentences and negated phrases are rejected. Approval commands do not use approximate matching. Microphone accuracy still depends on the local recognizer.

@@ -50,6 +50,36 @@ it('allows only complete known commands and maps learning intents without keepin
   ])
     expect(parseCommand(action)).not.toBeNull();
 });
+it('accepts inflections and close pronunciations only as short replacement commands', () => {
+  for (const phrase of [
+    'changed',
+    'changed it',
+    'applied',
+    'apply now',
+    'make the change',
+    'aply',
+    'appli',
+    'chang',
+    'chnage',
+    'a ply',
+    'a play',
+    're place',
+    'uh changed please',
+  ])
+    expect(parseCommand(phrase), phrase).toEqual({ action: 'replace', applyCurrent: true });
+  for (const phrase of [
+    "don't change",
+    'do not apply',
+    'no change',
+    'never apply it',
+    'I changed my mind',
+    'change it and send',
+    'please send this',
+    'approv',
+    'change alice@example.com',
+  ])
+    expect(parseCommand(phrase), phrase).toBeNull();
+});
 it('constructs metadata without copying text, reason, or placeholder and has lessons for every category', () => {
   const m = metadata(
     {

@@ -89,7 +89,42 @@ export const applyPhrases = [
   'apply this change',
   'replace',
   'replace this',
+  'changed',
+  'changed it',
+  'applied',
+  'apply now',
+  'make the change',
 ];
+// Match short replacement utterances, never arbitrary sentences or approval actions.
+function nearWord(word: string, target: string): boolean {
+  if (word === target) return true;
+  if (Math.abs(word.length - target.length) > 1) return false;
+  if (word.length === target.length) {
+    const differences = [...word].flatMap((letter, i) => (letter === target[i] ? [] : [i]));
+    return (
+      differences.length === 1 ||
+      (differences.length === 2 &&
+        differences[1] === differences[0] + 1 &&
+        word[differences[0]] === target[differences[1]] &&
+        word[differences[1]] === target[differences[0]])
+    );
+  }
+  const longer = word.length > target.length ? word : target,
+    shorter = word.length > target.length ? target : word;
+  for (let i = 0; i < longer.length; i++)
+    if (longer.slice(0, i) + longer.slice(i + 1) === shorter) return true;
+  return false;
+}
+function approximateReplacement(text: string): boolean {
+  if (['a ply', 'a play', 'a plie', 're place'].includes(text)) return true;
+  const match = /^([a-z]{4,9})(?: (?:it|this|now))?$/.exec(text);
+  return (
+    !!match &&
+    ['change', 'changed', 'apply', 'applied', 'replace', 'replaced'].some((word) =>
+      nearWord(match[1], word),
+    )
+  );
+}
 export const speechCommandHints = [
   ...applyPhrases,
   'next',
@@ -105,11 +140,12 @@ export function parseCommand(value: string): Command | null {
     .trim()
     .replace(/[.!?]+$/, '')
     .replace(/\s+/g, ' ')
-    .replace(/^please /, '')
+    .replace(/^(?:(?:please|um|uh) )+/, '')
     .replace(/ please$/, '');
   if (applyPhrases.includes(text)) return { action: 'replace', applyCurrent: true };
   if (text === 'next item' || text === 'go next') return { action: 'next' };
   if (commands[text]) return { action: commands[text] };
+  if (approximateReplacement(text)) return { action: 'replace', applyCurrent: true };
   if (questions[text]) return { action: 'explain', intent: questions[text] };
   const numbered = /^explain (?:the )?(first|second|third|fourth|fifth|\d+)(?: one| item)?$/.exec(
     text,

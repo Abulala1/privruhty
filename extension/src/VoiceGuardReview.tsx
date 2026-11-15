@@ -366,7 +366,10 @@ export function VoiceGuard(props: Props) {
         Private commands. One decision at a time. Nothing is sent when you approve.
       </p>
       <p>
-        <strong>Say “apply it” to change this item, or “next item” to continue.</strong>
+        <strong>
+          Say “change”, “changed”, “apply”, or “apply it”. Close pronunciations also work. Say “next
+          item” to continue.
+        </strong>
       </p>
       {heard && (
         <p className="notice">
