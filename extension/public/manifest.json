@@ -23,6 +23,11 @@
   "content_scripts": [
     {
       "matches": ["https://chatgpt.com/*", "https://claude.ai/*", "https://gemini.google.com/*"],
+      "js": ["attachments.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://chatgpt.com/*", "https://claude.ai/*", "https://gemini.google.com/*"],
       "js": ["content.js"],
       "run_at": "document_idle"
     }

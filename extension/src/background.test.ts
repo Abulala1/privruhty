@@ -49,6 +49,37 @@ it('encrypts bank persistence, authorizes restoration, and fails closed while lo
   ).toEqual({ ok: true });
   const result = await send({ kind: 'scan', text: 'Write to Alice Tan' }, page);
   expect(result.protected).toBe('Write to PERSON_1');
+  const attachment = await send({ kind: 'attachment-config' }, page);
+  expect(attachment).toMatchObject({ enabled: true, mode: 'auto', locked: false, scope: page.url });
+  expect(
+    (await send({ kind: 'attachment-config' }, { ...page, url: 'https://evil.example/' })).error,
+  ).toMatch(/Unsupported/);
+  expect(
+    (
+      await send(
+        {
+          kind: 'scan',
+          text: 'alice@example.com',
+          attachmentSession: attachment.session,
+          expectedScope: 'https://chatgpt.com/c/other',
+        },
+        page,
+      )
+    ).error,
+  ).toMatch(/expired/);
+  expect(
+    (
+      await send(
+        {
+          kind: 'scan',
+          text: 'alice@example.com',
+          attachmentSession: attachment.session,
+          expectedScope: page.url,
+        },
+        page,
+      )
+    ).protected,
+  ).toBe('EMAIL_1');
   expect(JSON.stringify(stored)).not.toContain('Alice');
   expect(JSON.stringify(stored)).not.toContain('passphrase');
   expect((await send({ kind: 'bank-status' }, page)).error).toMatch(/only inside/);
@@ -145,6 +176,22 @@ it('encrypts bank persistence, authorizes restoration, and fails closed while lo
   expect(JSON.stringify(body)).not.toContain('Alice');
   expect(JSON.stringify(body)).not.toContain('alice@example.com');
   await send({ kind: 'bank-lock' });
+  const lockedAttachment = await send({ kind: 'attachment-config' }, page);
+  expect(lockedAttachment.locked).toBe(true);
+  expect(lockedAttachment.session).not.toBe(attachment.session);
+  expect(
+    (
+      await send(
+        {
+          kind: 'scan',
+          text: 'alice@example.com',
+          attachmentSession: attachment.session,
+          expectedScope: page.url,
+        },
+        page,
+      )
+    ).error,
+  ).toMatch(/expired/);
   expect((await send({ kind: 'page-restore', texts: ['PERSON_1'] }, page)).error).toMatch(
     /Enable on-page/,
   );

@@ -4,7 +4,11 @@
 
 The intended workflow is: drop a file on a supported chat, hold the original upload, scan locally, create a protected copy, then attach only that copy. The original disk file stays unchanged. This is different from downloading a protected file through Documents.
 
-Privruhty currently implements local TXT/CSV sanitization and protected downloads. It does **not yet intercept files dropped onto ChatGPT, Claude, or Gemini**. The following is source-backed research and an implementation recommendation, not a claim that interception is already shipped. No third-party source was copied.
+Privruhty now intercepts top-frame file drops, picker selections, and pasted files on supported chat sites. The independent implementation uses `attachmentEntry.ts` (document-start entry), `attachmentGuard.ts` (hold/replay), `attachmentFiles.ts` (validated TXT/CSV transformation), and `AttachmentSettings.tsx`. It reuses worker scans, scoped mappings, and document export. No third-party source was copied.
+
+Auto-protect is enabled by default, with optional review before attaching. Limits are five UTF-8 TXT/CSV files per batch, 1 MB each. Unsupported formats, invalid CSV, unsafe scan policies, locked banks, stale sessions, navigation, and errors hold uploads. Generic filenames hide source names. Failed replay offers protected downloads. Disabling protection intentionally permits originals.
+
+Chromium tests inspect actual multipart bytes on synthetic supported-host fixtures. They cover drops, picker, paste, review/cancel, unsupported files, lock/navigation changes, and download fallback. These fixtures do not verify every live-site version or OS drag path. Sites requiring trusted events may require manual attachment of downloaded copies.
 
 ## Projects inspected
 
@@ -40,7 +44,7 @@ It locates upload controls and supplies files through `DataTransfer` plus bubbli
 
 1. Install a small early attachment guard on supported hosts, before asynchronous scanning. Capture files synchronously inside the drop/paste event because `DataTransfer.files` is protected outside those events. Prevent the original event from reaching ordinary site upload handlers while a decision is pending.
 2. Reuse `parseDocument`, the existing service-worker scan/mapping pipeline, and `exportDocument`. Start with the existing verified UTF-8 TXT/CSV formats and 1 MB bound. Keep mappings in the destination chat workspace so replies can restore their placeholders.
-3. Support a review-first default and an explicit Auto-protect setting for supported files. That setting authorizes automatic masking/attachment; exact-value/manual-review policies must still stop unsafe transformations. Show a persistent scanning/protection result, a cancel action, and meaningful failure messages.
+3. Support Auto-protect by default and an explicit review-first setting for supported files. That setting authorizes automatic masking/attachment; exact-value/manual-review policies must still stop unsafe transformations. Show a persistent scanning/protection result, a cancel action, and meaningful failure messages.
 4. Create a new in-memory protected `File` with an appropriate filename and MIME type. Do not overwrite the original disk file, and do not send the original to Gemini. A protected filename must not leak a sensitive original filename.
 5. Deliver the approved copy to the site's compatible upload input with `DataTransfer` and input/change events. Use host adapters to identify the correct composer/input and handle replaced DOM nodes. Add a loop guard and handle both input/change events so only one upload occurs.
 6. If the site rejects scripted attachment, offer a protected download and explicit reattachment. Do not silently release the original when scanning, policy, or replay fails. Unknown formats must not be labelled protected.

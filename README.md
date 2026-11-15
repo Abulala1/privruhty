@@ -1,4 +1,4 @@
-# Privruhty
+﻿# Privruhty
 
 **Accessible privacy protection for AI conversations.**
 
@@ -82,7 +82,9 @@ Mappings are scoped to each chat path, private composer, or document. Saved bank
 
 ### Files
 
-Direct drag-to-chat file interception is not implemented yet. See the [source-backed attachment protection research](docs/attachment-protection-research.md) for the proposed automatic hold, sanitize, and reattach workflow.
+Attachment protection now holds dropped, picked, and pasted files on ChatGPT, Claude, and Gemini, scans TXT/CSV locally, and hands the chat protected copies with generic filenames. Originals on disk stay unchanged. Auto-protect is enabled by default; choose Settings > Attachment handling > Review before attaching for approval first. Limits: five UTF-8 TXT/CSV files per batch, 1 MB each. Unsupported files and failed scans stay held. If scripted attachment fails, download the protected copies and attach manually. Attaching can upload immediately; Privruhty never clicks Send. Automatic name detection requires the local service; fallback checks can miss names. See [implementation and research](docs/attachment-protection-research.md).
+
+After rebuilding, reload Privruhty at `chrome://extensions` and refresh chat tabs. Test with a TXT file containing `alice@example.com`: drop it onto a chat and inspect `protected-document-1.txt`; it should contain `EMAIL_1`. Use synthetic data while testing.
 
 - **Replace sensitive text:** review UTF-8 TXT/CSV files up to 1 MB, approve, and download a protected copy. The source is unchanged. Replacing numeric cells can invalidate calculations.
 - **Encrypt / Decrypt:** protect files of any format up to 10 MB. Encryption includes the filename and content. A lost passphrase cannot be recovered; ordinary AI tools cannot analyse the encrypted file.

@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import './style.css';
 import { Shell } from './ui';
 import { VoiceGuardSettings } from './VoiceGuardSettings';
+import { AttachmentSettings } from './AttachmentSettings';
 
 function App() {
   const [token, setToken] = useState(''),
@@ -117,6 +118,7 @@ function App() {
           </div>
         </div>
       </div>
+      <AttachmentSettings />
       <VoiceGuardSettings />
     </Shell>
   );

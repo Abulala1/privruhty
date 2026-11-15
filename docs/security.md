@@ -1,5 +1,7 @@
 # Security limits and threat model
 
+Attachment protection is a best-effort document-start event guard, not an operating-system DLP boundary. It holds ordinary top-frame file input/drop/paste events and clears picker originals while scanning. Unsupported formats and errors do not release originals. Other extensions, site code that already obtained bytes, embedded frames, and future upload changes remain outside this guarantee. Only UTF-8 TXT/CSV up to 1 MB are rewritten; PDF, Office, and images are held. Fallback detection can miss names and context. Attaching can upload immediately before Send. Explicitly disabling protection permits originals.
+
 ## VoiceGuard education and speech
 
 Voice commands are parsed locally against a fixed allowlist. No raw transcript is stored or uploaded; unsupported questions remain local. Recognition requires explicit on-device processing and an installed local pack, never remote fallback. Sessions start only by user action and stop on cancellation, approval, hidden documents, unmount, errors, or a five-minute bound. Speech output uses only voices marked local and pauses recognition to avoid echo commands.

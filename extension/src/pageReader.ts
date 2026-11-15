@@ -2,7 +2,7 @@ import { contentRuntime } from './contentRuntime';
 import { textRuns, distributeParts } from './pageText';
 
 const excluded =
-  'script,style,noscript,textarea,input,button,select,option,nav,aside,header,[hidden],[aria-hidden="true"],#prompt-textarea,#pribruhty-ui,#pribruhty-suggestion,#pribruhty-page-view,#pribruhty-reload';
+  'script,style,noscript,textarea,input,button,select,option,nav,aside,header,[hidden],[aria-hidden="true"],#prompt-textarea,#pribruhty-ui,#pribruhty-suggestion,#pribruhty-page-view,#pribruhty-reload,#privruhty-attachments';
 const token = /(?<![A-Za-z0-9_])[A-Z][A-Z_]*_\d+(?![A-Za-z0-9_])/;
 function excludedNode(node: Text) {
   const element = node.parentElement;

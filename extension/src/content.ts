@@ -84,7 +84,9 @@ function baseCard(card: HTMLElement) {
   });
 }
 function isOwnUI(element: Element) {
-  return !!element.closest('#pribruhty-ui,#pribruhty-suggestion,#pribruhty-page-view');
+  return !!element.closest(
+    '#pribruhty-ui,#pribruhty-suggestion,#pribruhty-page-view,#privruhty-attachments',
+  );
 }
 function isEditor(element: Element) {
   return (

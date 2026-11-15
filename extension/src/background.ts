@@ -18,6 +18,7 @@ import {
 } from './crypto';
 import { supportedPage, pageScope, restorePageBatch, type PageGrant } from './pageView';
 import { categories, validateExplanation } from './voiceguard';
+import { attachmentPreferences } from './attachmentPolicy';
 
 let entries: Entry[] = [];
 let expiresAt = Date.now() + TTL;
@@ -25,6 +26,7 @@ let key: CryptoKey | null = null;
 let salt = '';
 let queue = Promise.resolve();
 let bankRevision = 0;
+let bankSession = crypto.randomUUID();
 const storageKey = 'encryptedWordBank';
 const pageGrants = new Map<number, PageGrant>();
 const appliedScopes = new Map<number, string>();
@@ -41,6 +43,7 @@ const extensionPage = (sender: chrome.runtime.MessageSender) =>
 async function expire() {
   const stored = (await chrome.storage.local.get(storageKey))[storageKey];
   if (Date.now() >= expiresAt) {
+    bankSession = crypto.randomUUID();
     revokePageViews();
     entries = [];
     key = null;
@@ -65,6 +68,32 @@ async function run(message: any, sender: chrome.runtime.MessageSender) {
     sender.url &&
     supportedPage(sender.url) &&
     (!sender.frameId || sender.frameId === 0);
+  const attachmentScope = async () => {
+    if (!contentPage) throw new Error('Unsupported attachment context.');
+    const tab = await chrome.tabs.get(tabId!);
+    if (
+      !tab.url ||
+      !supportedPage(tab.url) ||
+      new URL(tab.url).origin !== new URL(sender.url!).origin
+    )
+      throw new Error('Attachment context changed.');
+    return pageScope(tab.url);
+  };
+  if (message.kind === 'attachment-config') {
+    if (!contentPage) throw new Error('Unsupported attachment context.');
+    const stored = await chrome.storage.local.get([storageKey, 'attachmentProtection']);
+    return {
+      ...attachmentPreferences(stored.attachmentProtection),
+      locked: !!stored[storageKey] && !key,
+      session: bankSession,
+      scope: await attachmentScope(),
+    };
+  }
+  if (message.kind === 'open-documents') {
+    if (!ui && !contentPage) throw new Error('Unsupported attachment context.');
+    await chrome.tabs.create({ url: chrome.runtime.getURL('documents.html') });
+    return { ok: true };
+  }
   if (message.kind === 'explain-risk') {
     if (!ui && !contentPage) throw new Error('Unsupported review context.');
     const m = message.metadata;
@@ -185,12 +214,20 @@ async function run(message: any, sender: chrome.runtime.MessageSender) {
   if (message.kind === 'scan') {
     if (typeof message.text !== 'string' || message.text.length > 1_000_000)
       throw new Error('Draft is empty or too large.');
-    const scope = ui
-      ? String(message.scope || 'composer').slice(0, 500)
-      : sender.url
-        ? new URL(sender.url).origin + new URL(sender.url).pathname
-        : '';
+    const scope =
+      message.attachmentSession !== undefined
+        ? await attachmentScope()
+        : ui
+          ? String(message.scope || 'composer').slice(0, 500)
+          : sender.url
+            ? new URL(sender.url).origin + new URL(sender.url).pathname
+            : '';
     if (!scope) throw new Error('Unsupported scan context.');
+    if (
+      message.attachmentSession !== undefined &&
+      (!contentPage || message.attachmentSession !== bankSession || message.expectedScope !== scope)
+    )
+      throw new Error('Attachment review expired. Drop the file again in the intended chat.');
     const stored = (await chrome.storage.local.get(storageKey))[storageKey];
     const detected = await detectLocally(message.text);
     // Do not merge a new anonymous session with a locked encrypted bank.
@@ -311,11 +348,13 @@ async function run(message: any, sender: chrome.runtime.MessageSender) {
       salt = toBase64(bytes);
       await persist();
     }
+    bankSession = crypto.randomUUID();
     return { ok: true };
   }
   if (message.kind === 'bank-lock') {
     const stored = (await chrome.storage.local.get(storageKey))[storageKey];
     if (!stored) throw new Error('Set a passphrase before locking the word bank.');
+    bankSession = crypto.randomUUID();
     revokePageViews();
     key = null;
     entries = [];
@@ -323,6 +362,7 @@ async function run(message: any, sender: chrome.runtime.MessageSender) {
     return { ok: true };
   }
   if (message.kind === 'bank-clear') {
+    bankSession = crypto.randomUUID();
     revokePageViews();
     appliedScopes.clear();
     entries = [];
@@ -335,6 +375,7 @@ async function run(message: any, sender: chrome.runtime.MessageSender) {
   if (message.kind === 'bank-delete') {
     if ((await chrome.storage.local.get(storageKey))[storageKey] && !key)
       throw new Error('Unlock the bank first.');
+    bankSession = crypto.randomUUID();
     revokePageViews();
     entries = entries.map((e) => (e.id === message.id ? { ...e, original: '' } : e));
     await persist();

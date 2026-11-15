@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && esbuild src/content.ts --bundle --minify --format=iife --outfile=dist/content.js",
+    "build": "tsc -b && vite build && esbuild src/content.ts --bundle --minify --format=iife --outfile=dist/content.js && esbuild src/attachmentEntry.ts --bundle --minify --format=iife --outfile=dist/attachments.js",
     "test": "vitest run",
     "test:e2e": "playwright test",
     "format": "prettier --write --ignore-path ../.prettierignore . ../*.md ../docs ../test-data/README.md ../.github ../.prettierrc.json",
