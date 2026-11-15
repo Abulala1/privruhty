@@ -1,0 +1,5 @@
+FICTIONAL DEMO DATA
+
+Write an email to Alice at alice@example.com and ask Bob at bob@example.com to review it.
+
+Expected name placeholders: Alice = PERSON_1; Bob = PERSON_2.

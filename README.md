@@ -117,6 +117,10 @@ In the future, we hope Privruhty can become a universal privacy assistant that w
 
 ## Run the project
 
+### Demo name fixtures
+
+This demo build uses explicit name rules: **Alice → PERSON_1** and **Bob → PERSON_2**, regardless of appearance order. These fixtures override incorrect PERSON/COMPANY/LOCATION classifications for the standalone names; email addresses retain email detection. See [demo data](test-data/demo-alice-bob.txt). Existing conflicting word-bank slots are preserved: use a fresh workspace or clear your demo bank if prompted. These fixed names are presentation fixtures, not evidence of general name-detection accuracy.
+
 Requirements: desktop Chrome, Node.js 22.20+ within the supported range in `extension/package.json`, and Python 3.11 or 3.12. From a cloned repository, run in Windows PowerShell:
 
 ```powershell

@@ -100,6 +100,20 @@ async function transfer(
 }
 const panel = (page: Page) => page.getByRole('region', { name: 'Privruhty attachment protection' });
 
+test('demo Alice and Bob always receive fixed PERSON tokens regardless of order', async () => {
+  const f = await fixture();
+  try {
+    await f.control.goto(f.root + '/composer.html');
+    const draft = f.control.getByRole('textbox', { name: 'Private draft', exact: true });
+    await draft.fill('Write to Bob and Alice at alice@example.com.');
+    await expect(f.control.locator('pre')).toHaveText('Write to PERSON_2 and PERSON_1 at EMAIL_1.');
+    await draft.fill('Alice and Bob.');
+    await expect(f.control.locator('pre')).toHaveText('PERSON_1 and PERSON_2.');
+  } finally {
+    await f.close();
+  }
+});
+
 test('cloud settings require explicit consent and show the final server controls', async () => {
   const f = await fixture();
   try {

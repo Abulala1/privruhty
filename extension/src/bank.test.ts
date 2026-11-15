@@ -2,6 +2,52 @@ import { describe, it, expect } from 'vitest';
 import { assignMappings, includeKnownTerms, restoreParts, type Entry } from './bank';
 import { fallback } from './core';
 describe('word bank and private restoration', () => {
+  it('pins demo names by identity rather than order and overrides wrong NLP categories', () => {
+    const text = 'Bob met Alice. Email alice@example.com.';
+    const result = fallback(text);
+    for (const [original, type] of [
+      ['Bob', 'COMPANY'],
+      ['Alice', 'LOCATION'],
+    ]) {
+      const start = text.indexOf(original);
+      result.spans.push({
+        start,
+        end: start + original.length,
+        type,
+        confidence: 0.85,
+        replacement: type + '_1',
+        strategy: 'PSEUDONYM',
+        reason: 'NLP',
+      });
+    }
+    const entries: Entry[] = [];
+    const scan = assignMappings(result, text, 'demo', entries);
+    expect(scan.protected).toBe('PERSON_2 met PERSON_1. Email EMAIL_1.');
+    expect(scan.spans.filter((span) => span.type === 'PERSON')).toHaveLength(2);
+    expect(
+      assignMappings(fallback('Alice and Bob.'), 'Alice and Bob.', 'demo', entries).protected,
+    ).toBe('PERSON_1 and PERSON_2.');
+    expect(
+      restoreParts('PERSON_1 and PERSON_2', 'demo', entries)
+        .map((part) => part.text)
+        .join(''),
+    ).toBe('Alice and Bob');
+  });
+  it('does not overwrite an existing mapping when a demo slot is occupied', () => {
+    const entries: Entry[] = [
+      {
+        id: 'old',
+        scope: 'a',
+        type: 'PERSON',
+        original: 'Carol',
+        replacement: 'PERSON_1',
+        createdAt: 0,
+      },
+    ];
+    expect(() => assignMappings(fallback('Bob'), 'Bob', 'a', entries)).toThrow(/fresh chat/);
+    expect(entries[0].original).toBe('Carol');
+    expect(entries).toHaveLength(1);
+  });
   it('does not suggest replacing protected tokens again or retain no-op findings', () => {
     const text = 'Hi LOCATION_1 at alice@example.com';
     const result = fallback(text);
