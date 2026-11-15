@@ -24,7 +24,7 @@ type Recognition = {
 type RecognitionConstructor = {
   new (): Recognition;
   available?: (options: { langs: string[]; processLocally: boolean }) => Promise<string>;
-  install?: (options: { langs: string[] }) => Promise<boolean>;
+  install?: (options: { langs: string[]; processLocally: boolean }) => Promise<boolean>;
 };
 type SpeechEnvironment = {
   SpeechRecognition?: RecognitionConstructor;
@@ -59,7 +59,7 @@ export class PrivateSpeech {
         'Downloading language pack',
         'Chrome is setting up local English recognition. Keep this review open.',
       );
-      const ok = await ctor.install({ langs: ['en-US'] });
+      const ok = await ctor.install({ langs: ['en-US'], processLocally: true });
       if (version !== this.version || this.disposed) return;
       if (ok) await this.start();
       else

@@ -36,12 +36,16 @@ it('does not start a recognizer without explicit local capability and an install
 });
 it('starts listening after successful local pack setup and does not resume after canceled setup', async () => {
   class Installable extends LocalRecognition {
-    static install = vi.fn(async () => true);
+    // Chrome returns false when processLocally is omitted, even for a supported language.
+    static install = vi.fn(
+      async (options: { langs: string[]; processLocally: boolean }) =>
+        options.processLocally === true,
+    );
   }
   const state = vi.fn(),
     speech = new PrivateSpeech(state, vi.fn(), { SpeechRecognition: Installable });
   await speech.install();
-  expect(Installable.install).toHaveBeenCalledWith({ langs: ['en-US'] });
+  expect(Installable.install).toHaveBeenCalledWith({ langs: ['en-US'], processLocally: true });
   expect(LocalRecognition.instance.start).toHaveBeenCalled();
   expect(state).toHaveBeenLastCalledWith('Listening');
   speech.destroy();
