@@ -28,7 +28,37 @@ it('does not start a recognizer without explicit local capability and an install
   const withPack = new PrivateSpeech(state, vi.fn(), { SpeechRecognition: LocalRecognition });
   await withPack.start();
   expect(LocalRecognition.instance.start).not.toHaveBeenCalled();
+  expect(state).toHaveBeenLastCalledWith(
+    'Language pack required',
+    expect.stringContaining('Install local English pack'),
+  );
   withPack.destroy();
+});
+it('starts listening after successful local pack setup and does not resume after canceled setup', async () => {
+  class Installable extends LocalRecognition {
+    static install = vi.fn(async () => true);
+  }
+  const state = vi.fn(),
+    speech = new PrivateSpeech(state, vi.fn(), { SpeechRecognition: Installable });
+  await speech.install();
+  expect(Installable.install).toHaveBeenCalledWith({ langs: ['en-US'] });
+  expect(LocalRecognition.instance.start).toHaveBeenCalled();
+  expect(state).toHaveBeenLastCalledWith('Listening');
+  speech.destroy();
+  let finish!: (ok: boolean) => void;
+  Installable.install.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+  );
+  const stopped = new PrivateSpeech(state, vi.fn(), { SpeechRecognition: Installable });
+  const pending = stopped.install();
+  stopped.stop();
+  finish(true);
+  await pending;
+  expect(state).toHaveBeenLastCalledWith('Idle');
+  stopped.destroy();
 });
 it('forces local processing, dispatches final results, handles permission denial, and stops on cancel', async () => {
   const state = vi.fn(),

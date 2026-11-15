@@ -24,7 +24,7 @@ It offers several key features:
 - **Encrypted Word Bank:** Stores original information locally with optional AES-GCM encryption, allowing users to restore known placeholders when needed.
 - **Document Protection:** Detects sensitive information in TXT and CSV files and creates sanitized copies. It also supports whole-file encryption for private storage.
 - **VoiceGuard:** Lets users review privacy warnings through voice commands such as "Explain this," "Replace it," "Keep it," and "Undo."
-- **Movable Privacy Controls:** Drag the green shield or use its arrow-key controls to reposition it. The microphone icon opens speech review with expanded voice controls and automatic local listening when supported and permitted. Say "change" to select a replacement or "next" to advance.
+- **Movable Privacy Controls:** Drag the green shield or use its arrow-key controls to reposition it. The microphone icon opens speech review with expanded voice controls and automatic local listening when supported and permitted. In inline chat review, say "change" to apply the current replacement directly or "next" to advance. Composer and Documents retain preview and approval controls.
 - **Easy Understand Mode:** Provides simple explanations, accessible controls, high contrast, and adjustable text size.
 - **Gemini Cybersecurity Assistant:** Designed to explain why information is sensitive, what risks it creates, and how to protect it, using only explicitly approved category and task metadata.
 

@@ -25,6 +25,7 @@ type Props = {
   onApproved: (approved: boolean) => void;
   onCancel: () => void;
   onScan: () => void;
+  onApplyCurrent?: (index: number) => void;
 };
 export function VoiceGuard(props: Props) {
   const [prefs, setPrefs] = useState(defaultPreferences),
@@ -211,6 +212,15 @@ export function VoiceGuard(props: Props) {
           tell('This value needs manual review. Changing it may make the answer incorrect.');
           break;
         }
+        if (command.applyCurrent && props.onApplyCurrent) {
+          if (!props.result.safe_to_submit) {
+            tell('Resolve manual-review warnings before applying a change.');
+            break;
+          }
+          speech.current?.stop();
+          props.onApplyCurrent(at);
+          break;
+        }
         const values = [...props.accepted];
         values[at] = command.action === 'replace';
         change(values, at);
@@ -345,6 +355,26 @@ export function VoiceGuard(props: Props) {
       <p className="muted">
         Private commands. One decision at a time. Nothing is sent when you approve.
       </p>
+      {[
+        'Language pack required',
+        'Downloading language pack',
+        'Local recognition unavailable',
+        'Microphone permission denied',
+        'Error',
+      ].includes(voiceState) && (
+        <div className="warning">
+          <p>{message}</p>
+          <button
+            onClick={() => void speech.current?.install()}
+            disabled={voiceState === 'Downloading language pack'}
+          >
+            Set up English and start listening
+          </button>
+          <button className="secondary" onClick={() => void speech.current?.start()}>
+            Retry listening
+          </button>
+        </div>
+      )}
       <div className="row">
         <label>
           <input
@@ -506,9 +536,12 @@ export function VoiceGuard(props: Props) {
         </summary>
         <p>
           Speech mode starts when this review opens, if supported and permitted. Say “change” to
-          select the current replacement or “next” to move to the next finding. It runs only in this
-          visible review for up to five minutes. Stop at any time. Local English recognition and an
-          installed language pack are required. Chrome may ask for microphone permission.
+          {props.onApplyCurrent
+            ? 'apply the current replacement in the chat'
+            : 'select the current replacement in the preview'}{' '}
+          or “next” to move to the next finding. It runs only in this visible review for up to five
+          minutes. Stop at any time. Local English recognition and an installed language pack are
+          required. Chrome may ask for microphone permission.
         </p>
         <div className="row">
           <button onClick={() => void speech.current?.start()}>

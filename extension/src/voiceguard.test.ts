@@ -9,8 +9,8 @@ import {
 } from './voiceguard';
 it('allows only complete known commands and maps learning intents without keeping transcript text', () => {
   expect(parseCommand(' Replace it. ')).toEqual({ action: 'replace' });
-  expect(parseCommand('Change.')).toEqual({ action: 'replace' });
-  expect(parseCommand('change it')).toEqual({ action: 'replace' });
+  expect(parseCommand('Change.')).toEqual({ action: 'replace', applyCurrent: true });
+  expect(parseCommand('change it')).toEqual({ action: 'replace', applyCurrent: true });
   expect(parseCommand('Explain the first one.')).toEqual({
     action: 'explain',
     intent: 'EXPLAIN_RISK',

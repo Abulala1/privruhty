@@ -43,6 +43,7 @@ export type Command = {
     | 'stop';
   intent?: Intent;
   index?: number;
+  applyCurrent?: boolean;
 };
 const commands: Record<string, Command['action']> = {
   'scan my message': 'scan',
@@ -84,6 +85,7 @@ export function parseCommand(value: string): Command | null {
     .trim()
     .replace(/[.!?]+$/, '')
     .replace(/\s+/g, ' ');
+  if (text === 'change' || text === 'change it') return { action: 'replace', applyCurrent: true };
   if (commands[text]) return { action: commands[text] };
   if (questions[text]) return { action: 'explain', intent: questions[text] };
   const numbered = /^explain (?:the )?(first|second|third|fourth|fifth|\d+)(?: one| item)?$/.exec(

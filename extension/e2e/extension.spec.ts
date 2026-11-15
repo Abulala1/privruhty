@@ -490,9 +490,21 @@ test('readable dark-theme highlights, draggable review, and hover approval for i
     ).toBeVisible();
     await expect(speechReview).toContainText('Say “change”');
     await expect(speechReview.getByRole('status')).toContainText(
-      /Listening|unavailable|permission|could not|recognition stopped/,
+      /Listening|unavailable|permission|could not|recognition stopped|English needs setup|downloading/,
     );
     await page.screenshot({ path: 'test-results/draggable-shield-speech.png' });
+    const command = speechReview.getByRole('textbox', { name: 'Type an allowed command' });
+    await command.fill('next');
+    await command.press('Enter');
+    await expect(speechReview.getByRole('heading', { level: 3 })).toContainText('PHONE');
+    await command.fill('change');
+    await command.press('Enter');
+    await expect(editor).toContainText('PHONE_1');
+    await expect(editor).not.toContainText('415-555-0199');
+    await expect(editor).toContainText('bob@example.com');
+    await expect(
+      page.getByRole('region', { name: 'VoiceGuard accessible privacy review' }),
+    ).toBeVisible();
   } finally {
     await context.close();
     await cleanProfile(profile);

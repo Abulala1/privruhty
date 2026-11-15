@@ -11,6 +11,7 @@ export function mountVoiceGuard(
   insert: (values: boolean[]) => void,
   cancel: () => void,
   scan: () => void,
+  applyCurrent?: (index: number) => void,
 ) {
   function Review() {
     const [accepted, setAccepted] = useState(initial),
@@ -31,6 +32,7 @@ export function mountVoiceGuard(
           onApproved={setApproved}
           onCancel={cancel}
           onScan={scan}
+          onApplyCurrent={applyCurrent}
         />
         <div className="voiceguard">
           <button disabled={!approved || !result.safe_to_submit} onClick={() => setConfirm(true)}>

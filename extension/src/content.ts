@@ -21,6 +21,7 @@ let shield: HTMLButtonElement | null = null;
 let speechButton: HTMLButtonElement | null = null;
 let shieldPosition: { x: number; y: number } | null = null;
 let shieldDragged = false;
+let resumeSpeechReview = false;
 let panel: HTMLDivElement | null = null;
 let popup: HTMLDivElement | null = null;
 let current: Scan | null = null;
@@ -507,6 +508,12 @@ function showReview(speechMode = false) {
         clearVoiceGuard();
         void inspect();
       },
+      (index) => {
+        const span = result.spans[index];
+        if (!span || value(editor!) !== text || !result.safe_to_submit) return;
+        resumeSpeechReview = true;
+        applyApproved([span], text);
+      },
     );
     position();
   };
@@ -807,7 +814,10 @@ async function inspect() {
   shield!.textContent = current!.spans.length ? '🛡 ' + current!.spans.length : '🛡';
   shield!.style.width = current!.spans.length ? '52px' : '40px';
   highlight();
-  if (panel || (current!.spans.length && !dismissed)) showReview();
+  if (resumeSpeechReview) {
+    resumeSpeechReview = false;
+    showReview(true);
+  } else if (panel || (current!.spans.length && !dismissed)) showReview();
 }
 function scheduleScan() {
   if (disposed || !contentRuntime.active) return;

@@ -5,6 +5,8 @@ export type VoiceState =
   | 'Speaking'
   | 'Error'
   | 'Microphone permission denied'
+  | 'Language pack required'
+  | 'Downloading language pack'
   | 'Local recognition unavailable';
 export const unavailable =
   'Private voice recognition is unavailable in this browser. You can continue using keyboard controls.';
@@ -48,17 +50,32 @@ export class PrivateSpeech {
     return this.env.SpeechRecognition || this.env.webkitSpeechRecognition;
   }
   async install() {
+    this.stop();
+    const version = this.version;
     const ctor = this.ctor();
     try {
       if (!ctor?.install || !ctor.available || !('processLocally' in new ctor())) throw new Error();
-      const ok = await ctor.install({ langs: ['en-US'] });
       this.state(
-        ok ? 'Idle' : 'Local recognition unavailable',
-        ok ? 'Local language pack installed.' : unavailable,
+        'Downloading language pack',
+        'Chrome is setting up local English recognition. Keep this review open.',
       );
-    } catch {
-      this.state('Local recognition unavailable', unavailable);
+      const ok = await ctor.install({ langs: ['en-US'] });
+      if (version !== this.version || this.disposed) return;
+      if (ok) await this.start();
+      else
+        this.state(
+          'Language pack required',
+          'Chrome could not install the English pack. Check your internet connection and try Install local English pack again.',
+        );
+    } catch (error) {
+      if (version !== this.version || this.disposed) return;
+      this.state('Local recognition unavailable', this.failure(error));
     }
+  }
+  private failure(error: unknown) {
+    if (error instanceof DOMException && ['NotAllowedError', 'SecurityError'].includes(error.name))
+      return 'Chrome blocked local speech setup on this page. Click Install local English pack, or try speech in Privruhty Secure Composer. Check browser microphone permissions.';
+    return unavailable;
   }
   async start() {
     this.stop();
@@ -70,6 +87,20 @@ export class PrivateSpeech {
       if (!('processLocally' in recognition)) throw new Error();
       const available = await ctor.available({ langs: ['en-US'], processLocally: true });
       if (version !== this.version || this.disposed) return;
+      if (available === 'downloadable') {
+        this.state(
+          'Language pack required',
+          'Chrome supports local speech, but English needs setup for this page. Click Install local English pack below; listening will start after installation.',
+        );
+        return;
+      }
+      if (available === 'downloading') {
+        this.state(
+          'Downloading language pack',
+          'Chrome is downloading the English speech pack. Wait for it to finish, then choose Start private voice.',
+        );
+        return;
+      }
       if (available !== 'available') throw new Error();
       recognition.processLocally = true;
       recognition.lang = 'en-US';
@@ -101,9 +132,13 @@ export class PrivateSpeech {
           event.error === 'not-allowed' || event.error === 'service-not-allowed'
             ? 'Microphone permission denied'
             : 'Error',
-          event.error === 'not-allowed'
-            ? 'Microphone permission denied. Use keyboard controls.'
-            : 'Private recognition stopped. Use keyboard controls.',
+          ['not-allowed', 'service-not-allowed'].includes(event.error)
+            ? 'Microphone permission denied. Allow microphone access in Chrome site settings and Windows Settings > Privacy & security > Microphone, then click Start private voice.'
+            : event.error === 'audio-capture'
+              ? 'No usable microphone found. Connect a microphone and check Chrome and Windows microphone settings.'
+              : event.error === 'language-not-supported'
+                ? 'The local English speech pack is not ready. Click Install local English pack to set it up.'
+                : `Local recognition stopped (${event.error || 'unknown error'}). Click Start private voice to retry.`,
         );
       };
       recognition.onend = () => {
@@ -114,8 +149,9 @@ export class PrivateSpeech {
         this.state('Idle', 'Voice session ended after five minutes. Start again when ready.');
       }, 300000);
       this.listen();
-    } catch {
-      if (version === this.version) this.state('Local recognition unavailable', unavailable);
+    } catch (error) {
+      if (version === this.version)
+        this.state('Local recognition unavailable', this.failure(error));
     }
   }
   private listen() {
