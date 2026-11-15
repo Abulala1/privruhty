@@ -16,7 +16,13 @@ VoiceGuard shares the existing review pipeline across Composer, documents, and t
 
 Easy Understand Mode presents one finding at a time with simple explanations, progress, repeat controls, high contrast, adjustable text, visible focus, and screen-reader status announcements. Approval never sends a message; copying or inserting requires a separate confirmation.
 
-## Gemini cybersecurity education
+## Cloud and AI integrations
+
+### Vultr cloud detection
+
+The detector can also run on Vultr Cloud Compute using the included Docker Compose deployment and Caddy HTTPS proxy. Two workers preload the language model; extension Settings lets users select their server after consenting to raw-text scanning. The connection test measures round-trip latency. This integration is implemented with deployment templates; no running instance or speed benchmark is claimed.
+
+### Gemini education workflow
 
 Optional Gemini explanations receive only consented category, task, strategy, explanation-level, and topic enum values through the local backend. Original drafts, documents, mappings, audio, and transcripts are excluded. Structured output is validated, local policy retains authority, and prewritten lessons provide a fallback. The API key stays outside the extension.
 

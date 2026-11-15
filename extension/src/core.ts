@@ -1,3 +1,5 @@
+import { detectorConnection } from './detector';
+
 export type Span = {
   start: number;
   end: number;
@@ -110,34 +112,34 @@ export async function scan(text: string, scope = 'composer'): Promise<Scan> {
   return result;
 }
 export async function detectLocally(text: string): Promise<Scan> {
-  const { token, custom = '' } = await chrome.storage.local.get(['token', 'custom']);
-  if (token) {
-    try {
-      const r = await fetch('http://127.0.0.1:8765/scan', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', 'x-pribruhty-token': token },
-        body: JSON.stringify({
-          text,
-          custom: custom
-            .split('\n')
-            .map((x: string) => x.trim())
-            .filter(Boolean),
-        }),
-        signal: AbortSignal.timeout(8000),
-      });
-      if (r.ok) {
-        const result: Scan = await r.json();
-        const codepointToUtf16 = (index: number) =>
-          Array.from(text).slice(0, index).join('').length;
-        result.spans = result.spans.map((s) => ({
-          ...s,
-          start: codepointToUtf16(s.start),
-          end: codepointToUtf16(s.end),
-        }));
-        return result;
-      }
-    } catch {}
-  }
+  const { custom = '' } = await chrome.storage.local.get(['custom']);
+  try {
+    const { url, token } = await detectorConnection();
+    if (!token) throw new Error('Detector token missing.');
+    const r = await fetch(url + '/scan', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-pribruhty-token': token },
+      body: JSON.stringify({
+        text,
+        custom: custom
+          .split('\n')
+          .map((x: string) => x.trim())
+          .filter(Boolean),
+      }),
+      signal: AbortSignal.timeout(8000),
+      redirect: 'error',
+    });
+    if (r.ok) {
+      const result: Scan = await r.json();
+      const codepointToUtf16 = (index: number) => Array.from(text).slice(0, index).join('').length;
+      result.spans = result.spans.map((s) => ({
+        ...s,
+        start: codepointToUtf16(s.start),
+        end: codepointToUtf16(s.end),
+      }));
+      return result;
+    }
+  } catch {}
   return fallback(
     text,
     custom

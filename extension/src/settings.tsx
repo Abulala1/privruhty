@@ -4,6 +4,7 @@ import './style.css';
 import { Shell } from './ui';
 import { VoiceGuardSettings } from './VoiceGuardSettings';
 import { AttachmentSettings } from './AttachmentSettings';
+import { CloudSettings } from './CloudSettings';
 
 function App() {
   const [token, setToken] = useState(''),
@@ -118,6 +119,7 @@ function App() {
           </div>
         </div>
       </div>
+      <CloudSettings />
       <AttachmentSettings />
       <VoiceGuardSettings />
     </Shell>

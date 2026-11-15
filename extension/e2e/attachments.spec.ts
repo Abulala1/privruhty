@@ -100,6 +100,31 @@ async function transfer(
 }
 const panel = (page: Page) => page.getByRole('region', { name: 'Privruhty attachment protection' });
 
+test('cloud settings require explicit consent and show the final server controls', async () => {
+  const f = await fixture();
+  try {
+    const cloud = f.control.getByRole('region', { name: 'Vultr cloud detector' });
+    await cloud.getByLabel('Use cloud detector').check();
+    await cloud.getByLabel('Cloud HTTPS URL').fill('https://privacy.example.com');
+    await cloud
+      .getByLabel('Cloud service token')
+      .fill('synthetic-test-token-not-a-real-service-key');
+    await cloud.getByRole('button', { name: 'Save cloud settings' }).click();
+    await expect(cloud.getByRole('status')).toContainText('Confirm cloud scanning');
+    expect(
+      await f.control.evaluate(
+        async () => (await chrome.storage.local.get('cloudDetector')).cloudDetector,
+      ),
+    ).toBeUndefined();
+    await cloud.screenshot({ path: 'test-results/vultr-cloud-settings.png' });
+    await cloud.getByLabel('Use cloud detector').uncheck();
+    await cloud.getByRole('button', { name: 'Save cloud settings' }).click();
+    await expect(cloud.getByRole('status')).toContainText('Local detection selected');
+  } finally {
+    await f.close();
+  }
+});
+
 test('auto-protects drops on all supported hosts, file picks, pasted files, and actual multipart upload bytes', async () => {
   const f = await fixture();
   try {

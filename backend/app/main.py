@@ -1,21 +1,39 @@
 import os
 import secrets
+from contextlib import asynccontextmanager
 from pathlib import Path
 from fastapi import FastAPI, HTTPException, Request, UploadFile, File, Form
 from fastapi.responses import Response, JSONResponse
 from pydantic import BaseModel, Field
-from .core import plan, sanitize_txt, sanitize_csv
+from .core import plan, sanitize_txt, sanitize_csv, presidio_engine
 from .explanations import ExplanationRequest, explain
 
-app = FastAPI(title="Privruhty Local Service", docs_url=None, redoc_url=None)
+
+@asynccontextmanager
+async def lifespan(app):
+    if os.getenv("PRIVRUHTY_PRELOAD_MODEL") == "1":
+        presidio_engine()
+    yield
+
+
+app = FastAPI(title="Privruhty Detection Service", docs_url=None, redoc_url=None, lifespan=lifespan)
 TOKEN_PATH = Path.home() / ".pribruhty-token"
-if not TOKEN_PATH.exists():
+CLOUD = os.getenv("PRIVRUHTY_CLOUD") == "1"
+ENV_TOKEN = os.getenv("PRIVRUHTY_TOKEN", "").strip()
+ALLOWED_ORIGINS = {
+    x.strip() for x in os.getenv("PRIVRUHTY_ALLOWED_ORIGINS", "").split(",") if x.strip()
+}
+if CLOUD and (len(ENV_TOKEN) < 32 or not ALLOWED_ORIGINS):
+    raise RuntimeError(
+        "Cloud mode requires a token of at least 32 characters and allowed extension origins."
+    )
+if not ENV_TOKEN and not TOKEN_PATH.exists():
     TOKEN_PATH.write_text(secrets.token_urlsafe(32), encoding="ascii")
     try:
         os.chmod(TOKEN_PATH, 0o600)
     except OSError:
         pass
-TOKEN = TOKEN_PATH.read_text(encoding="ascii").strip()
+TOKEN = ENV_TOKEN or TOKEN_PATH.read_text(encoding="ascii").strip()
 MAX_TEXT = 1_000_000
 
 
@@ -28,7 +46,11 @@ class Scan(BaseModel):
 @app.middleware("http")
 async def restrict(request: Request, call_next):
     origin = request.headers.get("origin")
-    if origin and not origin.startswith("chrome-extension://"):
+    if origin and (
+        origin not in ALLOWED_ORIGINS
+        if ALLOWED_ORIGINS
+        else not origin.startswith("chrome-extension://")
+    ):
         return JSONResponse(
             {"detail": "Only a Chrome extension origin is allowed"}, status_code=403
         )
@@ -46,6 +68,7 @@ async def restrict(request: Request, call_next):
     ):
         return JSONResponse({"detail": "Invalid local token"}, status_code=401)
     response = await call_next(request)
+    response.headers["Cache-Control"] = "no-store"
     if origin:
         response.headers["Access-Control-Allow-Origin"] = origin
         response.headers["Vary"] = "Origin"

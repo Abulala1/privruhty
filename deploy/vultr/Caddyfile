@@ -1,0 +1,11 @@
+{$PRIVRUHTY_DOMAIN} {
+    request_body {
+        max_size 8MB
+    }
+    header {
+        Cache-Control "no-store"
+        X-Content-Type-Options "nosniff"
+        -Server
+    }
+    reverse_proxy detector:8765
+}

@@ -4,6 +4,7 @@
   "version": "0.2.0",
   "description": "Review sensitive text before sending it to AI chats.",
   "permissions": ["storage", "activeTab", "sidePanel"],
+  "optional_host_permissions": ["https://*/*"],
   "host_permissions": [
     "http://127.0.0.1:8765/*",
     "https://chatgpt.com/*",

@@ -1,0 +1,43 @@
+services:
+  detector:
+    build: ../../backend
+    restart: unless-stopped
+    environment:
+      PRIVRUHTY_CLOUD: "1"
+      PRIVRUHTY_TOKEN: ${PRIVRUHTY_TOKEN:?Set a strong server token in .env}
+      PRIVRUHTY_ALLOWED_ORIGINS: ${PRIVRUHTY_ALLOWED_ORIGINS:?Set your Chrome extension origin}
+      PRIVRUHTY_PRELOAD_MODEL: "1"
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-}
+    expose:
+      - "8765"
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 3g
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8765/health',timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 120s
+      retries: 3
+  proxy:
+    image: caddy:2
+    restart: unless-stopped
+    environment:
+      PRIVRUHTY_DOMAIN: ${PRIVRUHTY_DOMAIN:?Set your HTTPS domain}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      detector:
+        condition: service_healthy
+volumes:
+  caddy_data:
+  caddy_config:

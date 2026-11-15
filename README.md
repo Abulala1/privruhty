@@ -2,6 +2,14 @@
 
 **Accessible privacy protection for AI conversations.**
 
+## Gemini and Vultr integrations
+
+Privruhty includes optional Gemini-powered VoiceGuard education and a Vultr Cloud Compute deployment setup for the detection backend. Cloud scanning is selected in Settings, requires an HTTPS server, a token, and explicit consent to send original text. Local detection remains the default. Word-bank encryption and restoration stay in the extension. Cloud performance has not been benchmarked; no live Vultr deployment is claimed.
+
+See [Vultr deployment instructions](docs/sponsors/vultr.md) and [Gemini configuration](docs/sponsors/gemini-api.md). Configuration examples contain templates, not credentials. Gemini explanations use approved category metadata; cloud detection receives actual text to scan.
+
+![Vultr cloud detector settings with synthetic test configuration](docs/images/vultr-cloud-settings.png)
+
 Privruhty is a Chrome extension with a local Python detection service. It helps you review sensitive information, replace it with consistent placeholders, and choose what to share with ChatGPT, Claude, or Gemini. VoiceGuard adds accessible review and optional metadata-only Gemini explanations.
 
 ## Features

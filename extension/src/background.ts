@@ -19,6 +19,7 @@ import {
 import { supportedPage, pageScope, restorePageBatch, type PageGrant } from './pageView';
 import { categories, validateExplanation } from './voiceguard';
 import { attachmentPreferences } from './attachmentPolicy';
+import { detectorConnection } from './detector';
 
 let entries: Entry[] = [];
 let expiresAt = Date.now() + TTL;
@@ -116,14 +117,15 @@ async function run(message: any, sender: chrome.runtime.MessageSender) {
       ].includes(m.question_type)
     )
       throw new Error('Only approved category metadata may be sent.');
-    const { token } = await chrome.storage.local.get('token');
-    if (!token) return { source: 'unavailable' };
     try {
-      const response = await fetch('http://127.0.0.1:8765/explain', {
+      const { url, token } = await detectorConnection();
+      if (!token) return { source: 'unavailable' };
+      const response = await fetch(url + '/explain', {
         method: 'POST',
         headers: { 'content-type': 'application/json', 'x-pribruhty-token': token },
         body: JSON.stringify({ ...m, consent: true }),
         signal: AbortSignal.timeout(17000),
+        redirect: 'error',
       });
       if (!response.ok) return { source: 'unavailable' };
       const result = await response.json();

@@ -1,5 +1,7 @@
 # Security limits and threat model
 
+Optional cloud detection changes the trust boundary: with consent, original scanned drafts, attachment text, and custom terms travel over HTTPS to the configured server. They do not go to Gemini through the education endpoint. Cloud access requires a Chrome grant for the configured origin and a separate server token; redirects are rejected. Word-bank storage/restoration stays in the extension. The deployment disables access logs and response caching, but operators/providers remain trusted. Cloud mode is not local-only processing.
+
 Attachment protection is a best-effort document-start event guard, not an operating-system DLP boundary. It holds ordinary top-frame file input/drop/paste events and clears picker originals while scanning. Unsupported formats and errors do not release originals. Other extensions, site code that already obtained bytes, embedded frames, and future upload changes remain outside this guarantee. Only UTF-8 TXT/CSV up to 1 MB are rewritten; PDF, Office, and images are held. Fallback detection can miss names and context. Attaching can upload immediately before Send. Explicitly disabling protection permits originals.
 
 ## VoiceGuard education and speech
