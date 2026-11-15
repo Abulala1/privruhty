@@ -513,6 +513,8 @@ function showReview(speechMode = false) {
         if (!span || value(editor!) !== text || !result.safe_to_submit) return;
         resumeSpeechReview = true;
         applyApproved([span], text);
+        clearTimeout(timer);
+        void inspect();
       },
     );
     position();

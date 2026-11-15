@@ -1,6 +1,7 @@
 import { it, expect } from 'vitest';
 import {
   parseCommand,
+  fastCommandDelay,
   metadata,
   localExplanation,
   categories,
@@ -63,6 +64,10 @@ it('accepts inflections and close pronunciations only as short replacement comma
     'chnage',
     'a ply',
     'a play',
+    'chain',
+    'chains',
+    'cheng',
+    'a pie',
     're place',
     'uh changed please',
     'change changed',
@@ -85,6 +90,21 @@ it('accepts inflections and close pronunciations only as short replacement comma
     'change next',
   ])
     expect(parseCommand(phrase), phrase).toBeNull();
+});
+it('uses fast partial results only for replacement, navigation, and stop commands', () => {
+  expect(fastCommandDelay('apply')).toBe(300);
+  expect(fastCommandDelay('change')).toBe(300);
+  expect(fastCommandDelay('cheng')).toBe(450);
+  expect(fastCommandDelay('next')).toBe(300);
+  for (const text of [
+    'approve',
+    'approve draft',
+    'do not apply',
+    'change my mind',
+    'send it',
+    'hello',
+  ])
+    expect(fastCommandDelay(text)).toBeNull();
 });
 it('constructs metadata without copying text, reason, or placeholder and has lessons for every category', () => {
   const m = metadata(

@@ -383,7 +383,7 @@ test('readable dark-theme highlights, draggable review, and hover approval for i
     );
     const page = await context.newPage();
     await page.goto('https://chatgpt.com/c/hover-fixture');
-    const editor = page.getByRole('textbox');
+    const editor = page.locator('main [role="textbox"][contenteditable="true"]');
     await editor.focus();
     const review = page.locator('#pribruhty-ui');
     await expect(review).toBeVisible();

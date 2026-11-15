@@ -1,4 +1,4 @@
-import { speechCommandHints } from './voiceguard';
+import { speechCommandHints, fastCommandDelay } from './voiceguard';
 
 export type VoiceState =
   | 'Idle'
@@ -49,6 +49,11 @@ export class PrivateSpeech {
   private last = '';
   private disposed = false;
   private hintsSupported = true;
+  private pending: ReturnType<typeof setTimeout> | undefined;
+  private pendingText = '';
+  private handledInterim = false;
+  private recognitionEnded = false;
+  private endingEarly = false;
   constructor(
     private state: (state: VoiceState, message?: string) => void,
     private command: (text: string) => Promise<void> | void,
@@ -113,11 +118,15 @@ export class PrivateSpeech {
       recognition.processLocally = true;
       recognition.lang = 'en-US';
       recognition.continuous = false;
-      recognition.interimResults = false;
+      recognition.interimResults = true;
       if (this.hintsSupported && this.env.SpeechRecognitionPhrase && 'phrases' in recognition) {
         try {
           recognition.phrases = speechCommandHints.map(
-            (phrase) => new this.env.SpeechRecognitionPhrase!(phrase, 3),
+            (phrase) =>
+              new this.env.SpeechRecognitionPhrase!(
+                phrase,
+                ['change', 'apply', 'replace'].includes(phrase) ? 5 : 3,
+              ),
           );
         } catch {
           this.hintsSupported = false;
@@ -128,17 +137,31 @@ export class PrivateSpeech {
       recognition.onresult = (event) => {
         if (!this.session || this.speaking || this.processing) return;
         const result = event.results[event.resultIndex || 0];
-        if (!result?.isFinal) return;
-        this.processing = true;
-        this.state('Processing');
-        // Transcripts live only for dispatch. They are never stored or uploaded.
-        void Promise.resolve(this.command(String(result[0]?.transcript || ''))).finally(() => {
-          this.processing = false;
-          if (this.session && !this.speaking) this.listen();
-        });
+        if (!result || this.handledInterim) return;
+        const text = String(result[0]?.transcript || '');
+        if (result.isFinal) {
+          this.clearPending();
+          this.dispatchText(text, true);
+          return;
+        }
+        const delay = fastCommandDelay(text);
+        if (delay === null) {
+          this.clearPending();
+          return;
+        }
+        if (this.pendingText === text) return;
+        this.clearPending();
+        this.pendingText = text;
+        this.pending = setTimeout(() => {
+          this.clearPending();
+          if (!this.session || this.processing || this.speaking || this.handledInterim) return;
+          this.handledInterim = true;
+          this.dispatchText(text, false);
+        }, delay);
       };
       recognition.onerror = (event) => {
         if (!this.session) return;
+        this.clearPending();
         if (event.error === 'phrases-not-supported' && this.hintsSupported) {
           this.hintsSupported = false;
           recognition.phrases = [];
@@ -148,7 +171,8 @@ export class PrivateSpeech {
           );
           return;
         }
-        if (event.error === 'aborted' && (this.speaking || this.processing)) return;
+        if (event.error === 'aborted' && (this.speaking || this.processing || this.endingEarly))
+          return;
         if (event.error === 'no-speech') {
           this.state('Listening');
           return;
@@ -168,6 +192,10 @@ export class PrivateSpeech {
         );
       };
       recognition.onend = () => {
+        this.clearPending();
+        this.recognitionEnded = true;
+        this.endingEarly = false;
+        this.handledInterim = false;
         if (this.session && !this.processing && !this.speaking) this.listen();
       };
       this.timer = setTimeout(() => {
@@ -180,10 +208,49 @@ export class PrivateSpeech {
         this.state('Local recognition unavailable', this.failure(error));
     }
   }
+  private clearPending() {
+    clearTimeout(this.pending);
+    this.pending = undefined;
+    this.pendingText = '';
+  }
+  private dispatchText(text: string, final: boolean) {
+    const version = this.version;
+    this.processing = true;
+    this.state('Processing');
+    void Promise.resolve()
+      .then(() => {
+        if (version !== this.version || !this.session || this.disposed) return;
+        return this.command(text);
+      })
+      .catch(() => {
+        if (version === this.version)
+          this.state(
+            'Error',
+            'The command could not be applied. Try again or use the review buttons.',
+          );
+      })
+      .finally(() => {
+        if (version !== this.version) return;
+        this.processing = false;
+        if (this.session && !this.speaking) {
+          if (final || this.recognitionEnded) this.listen();
+          else {
+            this.endingEarly = true;
+            try {
+              this.recognition?.abort();
+            } catch {
+              /* Wait for the normal end event if abort is refused. */
+            }
+            this.state('Listening');
+          }
+        }
+      });
+  }
   private listen() {
     if (!this.session || this.speaking || this.disposed) return;
     try {
       this.recognition?.start();
+      this.recognitionEnded = false;
       this.state('Listening');
     } catch (error) {
       // A running recognizer may reject another start; other failures must be visible.
@@ -196,6 +263,10 @@ export class PrivateSpeech {
     }
   }
   stop() {
+    this.clearPending();
+    this.handledInterim = false;
+    this.endingEarly = false;
+    this.processing = false;
     this.version++;
     this.session = false;
     clearTimeout(this.timer);

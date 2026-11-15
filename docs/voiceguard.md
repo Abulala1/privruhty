@@ -87,6 +87,12 @@ The spoken **change** command previously only selected a preview replacement. In
 
 ### Easier commands
 
+Short replacement commands, navigation, and Stop can run from a stable partial transcript: 300 ms for exact commands and 450 ms for approximate replacement commands. These delays begin when Chrome supplies the transcript; microphone and recognition latency still vary by device. A revised or unrecognized partial cancels the pending action before its timer fires. Approval still requires a final transcript.
+
+After an early action, VoiceGuard ends that recognition turn and resumes listening without waiting for a long silence. The final transcript cannot repeat the same action. Stopping or closing review clears pending commands, and inline changes rescan immediately. Pronunciation variants such as **chain**, **cheng**, and **a pie** are accepted alongside the existing bounded matching.
+
+Verification for this update: production build, 40 unit tests, and three targeted browser tests passed. Speech timing and duplicate suppression use synthetic recognition events; live microphone latency has not been measured.
+
 Say **apply it**, **apply**, **replace**, or **change this** to approve the current inline replacement. **Next item** advances without changing text. Polite forms such as **please apply it** are accepted. Full-command matching rejects negated and unrelated sentences. Supported local engines receive moderate command phrase hints; unsupported hints are disabled without switching to remote recognition. The temporary Heard display helps diagnose recognition mistakes.
 
 Short replacement commands now accept **changed**, **applied**, and close spellings/pronunciations. Matching tolerates one character insertion, deletion, substitution, or adjacent transposition in the replacement verb, plus specific split pronunciations such as **a ply**. Only a short verb with an optional **it**, **this**, or **now** is eligible; arbitrary sentences and negated phrases are rejected. Approval commands do not use approximate matching. Microphone accuracy still depends on the local recognizer.

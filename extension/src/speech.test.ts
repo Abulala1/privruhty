@@ -16,6 +16,65 @@ class LocalRecognition {
     LocalRecognition.instance = this;
   }
 }
+it('dispatches stable interim commands quickly and suppresses their final duplicate', async () => {
+  vi.useFakeTimers();
+  const command = vi.fn(),
+    speech = new PrivateSpeech(vi.fn(), command, { SpeechRecognition: LocalRecognition });
+  try {
+    await speech.start();
+    const r = LocalRecognition.instance;
+    expect(r.interimResults).toBe(true);
+    const emit = (transcript: string, isFinal: boolean) =>
+      r.onresult({ results: [Object.assign([{ transcript }], { isFinal })] });
+    emit('apply', false);
+    await vi.advanceTimersByTimeAsync(299);
+    expect(command).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1);
+    expect(command).toHaveBeenCalledExactlyOnceWith('apply');
+    expect(r.abort).toHaveBeenCalled();
+    r.onerror({ error: 'aborted' });
+    expect(r.onresult).not.toBeNull();
+    emit('apply', true);
+    await vi.advanceTimersByTimeAsync(20);
+    expect(command).toHaveBeenCalledTimes(1);
+    r.onend();
+    emit('next', true);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(command).toHaveBeenCalledTimes(2);
+  } finally {
+    speech.destroy();
+    vi.useRealTimers();
+  }
+});
+it('cancels partial commands on revised speech or Stop and waits for final approval', async () => {
+  vi.useFakeTimers();
+  const command = vi.fn(),
+    speech = new PrivateSpeech(vi.fn(), command, { SpeechRecognition: LocalRecognition });
+  try {
+    await speech.start();
+    const r = LocalRecognition.instance;
+    const emit = (transcript: string, isFinal = false) =>
+      r.onresult({ results: [Object.assign([{ transcript }], { isFinal })] });
+    emit('change');
+    await vi.advanceTimersByTimeAsync(100);
+    emit('change my mind');
+    await vi.advanceTimersByTimeAsync(500);
+    expect(command).not.toHaveBeenCalled();
+    emit('approve');
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(command).not.toHaveBeenCalled();
+    emit('approve', true);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(command).toHaveBeenCalledExactlyOnceWith('approve');
+    emit('apply');
+    speech.stop();
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(command).toHaveBeenCalledTimes(1);
+  } finally {
+    speech.destroy();
+    vi.useRealTimers();
+  }
+});
 it('biases local recognition toward commands and keeps listening if hints are unsupported', async () => {
   class HintedRecognition extends LocalRecognition {
     phrases: { phrase: string; boost: number }[] = [];
@@ -33,6 +92,7 @@ it('biases local recognition toward commands and keeps listening if hints are un
   await speech.start();
   const r = LocalRecognition.instance as HintedRecognition;
   expect(r.phrases).toContainEqual({ phrase: 'apply it', boost: 3 });
+  expect(r.phrases).toContainEqual({ phrase: 'change', boost: 5 });
   r.onerror({ error: 'phrases-not-supported' });
   expect(r.phrases).toEqual([]);
   r.onend();

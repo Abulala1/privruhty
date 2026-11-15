@@ -116,7 +116,20 @@ function nearWord(word: string, target: string): boolean {
   return false;
 }
 function approximateReplacement(text: string): boolean {
-  if (['a ply', 'a play', 'a plie', 're place'].includes(text)) return true;
+  if (
+    [
+      'a ply',
+      'a play',
+      'a plie',
+      'a pie',
+      'a ploy',
+      're place',
+      'chain',
+      'chains',
+      'cheng',
+    ].includes(text)
+  )
+    return true;
   const match = /^([a-z]{4,9})(?: (?:it|this|now))?$/.exec(text);
   return (
     !!match &&
@@ -167,6 +180,20 @@ export function parseCommand(value: string): Command | null {
     if (index >= 0 && index < 2000) return { action: 'explain', intent: 'EXPLAIN_RISK', index };
   }
   return null;
+}
+export function fastCommandDelay(text: string): number | null {
+  const command = parseCommand(text);
+  if (!command || !(command.applyCurrent || ['next', 'previous', 'stop'].includes(command.action)))
+    return null;
+  const normalized = text
+    .toLowerCase()
+    .trim()
+    .replace(/[.!?]+$/, '')
+    .replace(/\s+/g, ' ');
+  return applyPhrases.includes(normalized) ||
+    ['next', 'next item', 'previous', 'stop'].includes(normalized)
+    ? 300
+    : 450;
 }
 export type Preferences = {
   enabled: boolean;
