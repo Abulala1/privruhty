@@ -135,14 +135,4 @@ npm run build
 
 Enable Developer mode at `chrome://extensions` and load the repository's `extension/dist` folder. In Privruhty Settings, enter the token created at `%USERPROFILE%/.pribruhty-token`, save, and test the connection. The legacy token filename is retained for compatibility. Refresh chat tabs after reloading the extension. See [CONTRIBUTING.md](CONTRIBUTING.md) for development and tests.
 
-Use [attachment-test.txt](test-data/attachment-test.txt) for a synthetic file demo. Automatic attachment replacement supports UTF-8 TXT/CSV up to 1 MB each, five files per batch. PDF/DOCX replacement is future work; whole-file encryption supports files up to 10 MB.
-
-## Integration and validation status
-
-The current version passes **32 extension unit tests, 12 backend tests, and 13 Chromium integration tests**. Browser tests use isolated synthetic chat pages; speech and provider responses are simulated in labelled tests. Live Gemini usage, Vultr deployment, real microphone accuracy, and human accessibility validation remain to be verified.
-
-Gemini is optional and requires backend credentials and per-review metadata consent. Vultr deployment files are included; cloud scanning requires an HTTPS server, a token, and explicit consent to send original text. Credentials are not bundled in this repository.
-
-The on-page original-word switch exposes restored values to the website. Use the extension-owned private reader for stronger separation. Detection may miss information; use Secure Composer for confidential drafts because websites can observe text entered in their editors.
-
 [Architecture](docs/architecture.md) | [Security](docs/security.md) | [VoiceGuard setup](docs/voiceguard.md) | [Gemini](docs/sponsors/gemini-api.md) | [Vultr](docs/sponsors/vultr.md)
