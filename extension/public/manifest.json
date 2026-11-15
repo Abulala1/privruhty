@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "Pribruhty",
+  "version": "0.2.0",
+  "description": "Review sensitive text before sending it to AI chats.",
+  "permissions": ["storage", "activeTab", "sidePanel"],
+  "host_permissions": [
+    "http://127.0.0.1:8765/*",
+    "https://chatgpt.com/*",
+    "https://claude.ai/*",
+    "https://gemini.google.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "side_panel": {
+    "default_path": "wordbank.html?reader=1"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://chatgpt.com/*", "https://claude.ai/*", "https://gemini.google.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

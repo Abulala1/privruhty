@@ -1,0 +1,37 @@
+# Security limits and threat model
+
+## VoiceGuard education and speech
+
+Voice commands are parsed locally against a fixed allowlist. No raw transcript is stored or uploaded; unsupported questions remain local. Recognition requires explicit on-device processing and an installed local pack, never remote fallback. Sessions start only by user action and stop on cancellation, approval, hidden documents, unmount, errors, or a five-minute bound. Speech output uses only voices marked local and pauses recognition to avoid echo commands.
+
+Optional Gemini education sends five validated enum fields through the authenticated local backend after per-review consent. The request schema forbids private/free-form fields. The API key remains in backend environment variables. Structured model output is validated as untrusted text and cannot execute actions, access mappings, approve drafts, or override credential/manual-review policy. Failure produces local fallback or an explicit error when fallback is disabled. Approval is separate from copying/inserting, which requires another confirmation. See [setup and remaining validation](voiceguard.md).
+
+The threat is accidental disclosure to hosted AI services. The extension intercepts only supported chat editors and asks the user to approve text insertion. The host page can see text typed directly into its editor before a scan. Use Secure Composer for confidential drafts.
+
+The inline assistant does not intercept the host site's Send button or Enter shortcut. It warns and removes detected credentials only when the user opens review and approves protection. A user can still submit an unprotected draft directly; this is a known gap requiring browser integration tests before a reliable send gate can be claimed.
+
+The local service binds to `127.0.0.1` when started with the documented command and requires a random token stored in the user's home directory. It rejects non-extension browser origins. This does not protect against malware or another local process that can read the token. The service has no telemetry.
+
+Regex and Presidio detection miss data, and context may identify a person after placeholder substitution. Confidence scores are detector estimates. Financial placeholders invalidate exact arithmetic. The MVP blocks export of a document if its task text demands exact sensitive financial values, but a user must still review every export.
+
+TXT and CSV are the only formats supporting replacement export. CSV is parsed, rebuilt and verified for row/cell count and cell values; quote style and line endings may change. Replacing numeric cells converts them to text. Unselected categories and undetected context remain unchanged. DOCX/PDF sanitization is blocked until hidden content, metadata, embedded objects, and images can be verified.
+
+## Word bank and restored views
+
+Mappings belong to a workspace (chat URL path, private composer, or random document ID). A global bank session lasts eight hours. Saved mappings are authenticated AES-256-GCM ciphertext in local extension storage; PBKDF2-SHA256 with 310,000 iterations derives a non-extractable key from a user passphrase. Salt and nonce are random, and every save uses a fresh nonce. The passphrase and key are never persisted or synced. Worker suspension/restart locks the bank. Temporary mode holds mappings in worker memory only and is not durable. Expired data is rejected and removed on next access. Deleting an entry leaves a token tombstone without its original value so that token is not reassigned in the current session.
+
+The service-worker message handler denies full bank read/decrypt/restore requests from content scripts. Local Chrome storage access is restricted to trusted extension contexts. A separate optional on-page restoration API is available only after the user enables it in the popup or on-page switch for a specific tab, chat URL path, and matching source word bank. It returns restored text for limited batches, never the full mapping table. Other tabs/paths remain unauthorized, and lock, deletion and expiry revoke the grants. Detection may allocate and encrypt mappings before the user applies all suggestions; deselecting a suggestion does not delete its bank entry. Detected credentials do not enter the bank. Manually added terms are checked for known credential patterns.
+
+The extension-owned page or browser side panel keeps originals outside the host DOM. Restoration is one pass, exact token matching within the selected workspace, and plain text rendering. Unknown tokens remain unchanged. Original values are never executed as HTML or code. A user can explicitly copy restored text, which places sensitive values on the clipboard. Readers must select the correct workspace; an AI can invent a matching placeholder and the reader cannot prove it is a genuine reference. Old sessions must not be restored with a new bank. A new-chat URL changing after a first message can require selecting the previous workspace explicitly.
+
+An additional **on-page original words** mode changes rendered message text in the host DOM, like page translation. Its activation UI states that the website can read the restored originals. This is a deliberate disclosure boundary: once a page observes an original, turning the feature off cannot retract it. The feature does not submit a new message or restore editable drafts, but a website can inspect and transmit its DOM. Do not claim its on-page originals remain private from the AI provider. A persistent badge identifies the mode, and the user can switch back to placeholders.
+
+On-page rendering uses text-node data updates, never HTML injection, and excludes scripts, styles, buttons, textareas and editable message composers. Contiguous inline text nodes are grouped so tokens split across formatting tags can be restored without flattening the markup. Block and excluded-element boundaries separate the groups. Mutation observers restore new and streaming message text. Protected snapshots are retained only in the content script's memory and used to revert unchanged text on disable/lock. Host re-renders are handled on a best-effort basis; shadow roots and cross-origin frames are not traversed. A page can alter its content or read the restored DOM during this process. The private extension reader remains the stronger privacy option.
+
+The bank is scoped by chat path, not an authenticated organization/account identity. Account isolation and automatic migration of new-chat mappings are not implemented. Users should lock/delete the bank when switching contexts. Explicit global custom terms and the backend token in detector settings are separate from the encrypted bank and remain local plaintext settings; avoid putting credentials there.
+
+## File encryption
+
+Whole-file encryption is available for any format up to 10 MB and authenticates the original filename, media type and bytes inside the encrypted payload. Files use the same Web Crypto primitives with a fresh salt and nonce, and a different authenticated purpose label from the bank. A wrong password, modified ciphertext or wrong-purpose envelope fails authentication before a download is built. A lost passphrase cannot be recovered. Encrypted files are not AI-readable and do not constitute sanitized documents.
+
+Local malware, browser profile compromise, a compromised extension build, screenshots and clipboard leakage are outside this protection. Do not use this tool as a guarantee of anonymity or as a substitute for organizational review.

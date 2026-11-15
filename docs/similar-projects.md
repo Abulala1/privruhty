@@ -1,0 +1,26 @@
+# Related work and file protection
+
+Researched November 14, 2026. These are capabilities described by the projects themselves; this is not an independent security audit or endorsement. No source code from these projects was copied into Pribruhty.
+
+| Project                                                                   | Relevant approach                                                                                                                  | Lesson for Pribruhty                                                                                                                              |
+| ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Privacy AI](https://github.com/bards-ai/privacy-ai)                      | Browser-local detection, deterministic placeholders, optional response deanonymization for ChatGPT, Claude, and Gemini             | Reversible placeholders are a practical way to preserve readable AI workflows. Its host-page restoration differs from our extension-owned reader. |
+| [Offsend browser extension](https://github.com/Offsend/browser-extension) | Local masking, AES-GCM mapping storage, restoration; extracts and scans DOCX/XLSX/PPTX and text PDFs without rewriting those files | File extraction and scanning alone are not sanitized export. Encrypted mapping storage and actual file rewriting are separate requirements.       |
+| [AI-Guardrails](https://github.com/mcgraser/AI-Guardrails)                | Local structured-data detectors, optional browser NER, warnings around office document/PDF uploads                                 | Local detection can be modular, with structured patterns available when a model is unavailable.                                                   |
+| [Presidio Anonymizer](https://presidio.dataprivacystack.org/anonymizer/)  | Replace, mask, redact, encrypt and decrypt operators; entity overlap resolution                                                    | Pseudonymization and encryption are different operations. Preserve spans, data structure and authorized mappings.                                 |
+
+## Our implementation
+
+### Page text switching
+
+The switching design was informed by [Local Translator's content script](https://github.com/mikakostoev/local-translator/blob/main/content.js): collect text units, retain original text-node values, apply a display transformation, reverse it on toggle, and observe incremental page changes. Pribruhty's implementation is independently written; it uses local word-bank mappings rather than a translation provider. Inline text runs allow a placeholder split across formatting elements to be restored while retaining the elements. Runs stop at block and excluded-element boundaries. Generated cards outside message selectors are included; navigation and prompt inputs are excluded. Unknown placeholders are preserved. Host-rendered shadow roots and cross-origin frames are not traversed.
+
+**AI-readable replacement:** TXT is rewritten by detected spans. CSV is parsed into cells with Papa Parse, scanned locally, transformed within cell boundaries, serialized, and parsed again to verify row/cell counts and values. The original is not modified. A protected numeric cell becomes text, so arithmetic may no longer be valid. Context and values missed by detection may remain identifying. Never upload the original by mistake.
+
+**Whole-file encryption:** Any file up to 10 MB can be encrypted into a `.pribruhty` JSON envelope. The encrypted payload includes the original name, media type and bytes. A random 16-byte salt and PBKDF2-SHA256 (310,000 iterations) derive a non-extractable AES-256-GCM key from the user's passphrase. Each encryption uses a fresh 12-byte nonce; version and purpose are authenticated. Decryption verifies authenticity before reconstructing a download. Password strength still matters, and a lost passphrase cannot be recovered.
+
+Encrypted files are opaque to ordinary AI services. For AI analysis, send a reviewed file with replacements; for private storage or transfer, encrypt the file. Encryption does not make it possible for a conventional chat model to analyze the hidden contents.
+
+**Complex document formats:** DOCX/PDF sanitization remains blocked. Safe implementation must inspect document properties, comments, headers/footers, embedded objects, image data, annotations, and hidden content. PDF export needs actual redaction and verification, not painted rectangles. Whole-file encryption is supported for these formats because it does not claim to rewrite or sanitize their internals.
+
+**Restored reading:** Pribruhty's extension-owned reader keeps the host page protected. An additional explicit opt-in page mode provides the requested page-translation experience by rewriting complete known tokens in rendered messages and streaming replies. That mode exposes restored values to the host's scripts, which is stated in its activation UI. Both modes require the matching workspace; unknown tokens remain unchanged, and credentials are never restored.
