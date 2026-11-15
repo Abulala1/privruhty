@@ -33,30 +33,25 @@ export function mountVoiceGuard(
           onCancel={cancel}
           onScan={scan}
           onApplyCurrent={applyCurrent}
-          advancedActions={
-            <div>
-              <button
-                disabled={!approved || !result.safe_to_submit}
-                onClick={() => setConfirm(true)}
-              >
-                Insert reviewed changes
-              </button>
-              {confirm && (
-                <div role="group" aria-label="Confirm insertion">
-                  <p>This website can read inserted text. Nothing will be submitted.</p>
-                  <button
-                    onClick={() => {
-                      if (approved) insert(accepted);
-                    }}
-                  >
-                    Confirm insert
-                  </button>
-                  <button onClick={() => setConfirm(false)}>Go back</button>
-                </div>
-              )}
-            </div>
-          }
         />
+        <div className="voiceguard">
+          <button disabled={!approved || !result.safe_to_submit} onClick={() => setConfirm(true)}>
+            Insert reviewed changes
+          </button>
+          {confirm && (
+            <div role="group" aria-label="Confirm insertion">
+              <p>This website can read inserted text. Nothing will be submitted.</p>
+              <button
+                onClick={() => {
+                  if (approved) insert(accepted);
+                }}
+              >
+                Confirm insert
+              </button>
+              <button onClick={() => setConfirm(false)}>Go back</button>
+            </div>
+          )}
+        </div>
       </>
     );
   }

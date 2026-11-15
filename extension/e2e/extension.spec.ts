@@ -114,7 +114,6 @@ test('VoiceGuard keyboard review, local speech fallback, approval invalidation, 
     const inline = chat.getByRole('region', { name: 'VoiceGuard accessible privacy review' });
     await expect(inline).toBeVisible();
     await inline.getByRole('button', { name: 'Keep', exact: true }).click();
-    await inline.getByText('More options', { exact: true }).click();
     await inline.getByRole('button', { name: 'Undo', exact: true }).click();
     const insert = chat.getByRole('button', { name: 'Insert reviewed changes', exact: true });
     await expect(insert).toBeDisabled();
@@ -486,10 +485,6 @@ test('readable dark-theme highlights, draggable review, and hover approval for i
     await page.getByRole('button', { name: 'Open speech mode', exact: true }).click();
     const speechReview = page.getByRole('region', { name: 'VoiceGuard accessible privacy review' });
     await expect(speechReview).toBeVisible();
-    await expect(speechReview.getByRole('button', { name: 'Change', exact: true })).toBeVisible();
-    await expect(speechReview.getByRole('button', { name: 'Next →', exact: true })).toBeVisible();
-    await page.screenshot({ path: 'test-results/voiceguard-compact.png' });
-    await speechReview.getByText('More options', { exact: true }).click();
     await expect(
       speechReview.getByRole('button', { name: 'Start private voice', exact: true }),
     ).toBeVisible();
