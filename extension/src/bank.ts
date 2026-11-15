@@ -1,6 +1,5 @@
 import { apply, type Scan } from './core';
 import { categories } from './voiceguard';
-import { demoNames, demoNameFindings } from './demoNames';
 export type Entry = {
   id: string;
   scope: string;
@@ -46,34 +45,6 @@ export function includeKnownTerms(
   return { ...result, spans: spans.sort((a, b) => a.start - b.start) };
 }
 export function assignMappings(result: Scan, text: string, scope: string, entries: Entry[]): Scan {
-  result = demoNameFindings(result, text);
-  const hasDemo = result.spans.some((span) => span.reason.startsWith('Fixed demo name:'));
-  if (hasDemo) {
-    for (const demo of demoNames) {
-      const occupied = entries.find(
-        (entry) => entry.scope === scope && entry.replacement === demo.replacement,
-      );
-      if (occupied && occupied.original.toLowerCase() !== demo.original.toLowerCase())
-        throw new Error(
-          `Demo slot ${demo.replacement} is already used in this workspace. Start a fresh chat or clear the demo word bank before using Alice and Bob.`,
-        );
-    }
-    const missing = demoNames.filter(
-      (demo) =>
-        !entries.some((entry) => entry.scope === scope && entry.replacement === demo.replacement),
-    );
-    if (entries.length + missing.length > 2000)
-      throw new Error('Word bank is full. Delete old entries before scanning.');
-    for (const demo of missing)
-      entries.push({
-        id: crypto.randomUUID(),
-        scope,
-        type: 'PERSON',
-        original: demo.original,
-        replacement: demo.replacement,
-        createdAt: Date.now(),
-      });
-  }
   const tokens = [
     ...text.matchAll(
       new RegExp(
@@ -101,7 +72,6 @@ export function assignMappings(result: Scan, text: string, scope: string, entrie
       (e) =>
         e.scope === scope &&
         e.type === span.type &&
-        (!span.reason.startsWith('Fixed demo name:') || e.replacement === span.replacement) &&
         e.original.toLowerCase() === original.toLowerCase(),
     );
     if (!entry) {

@@ -8,8 +8,8 @@
     "build": "tsc -b && vite build && esbuild src/content.ts --bundle --minify --format=iife --outfile=dist/content.js && esbuild src/attachmentEntry.ts --bundle --minify --format=iife --outfile=dist/attachments.js",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "format": "prettier --write --ignore-path ../.prettierignore . ../*.md ../docs ../test-data/README.md ../.github ../.prettierrc.json",
-    "format:check": "prettier --check --ignore-path ../.prettierignore . ../*.md ../docs ../test-data/README.md ../.github ../.prettierrc.json"
+    "format": "prettier --write --ignore-path ../.prettierignore . ../*.md ../docs ../.github ../.prettierrc.json",
+    "format:check": "prettier --check --ignore-path ../.prettierignore . ../*.md ../docs ../.github ../.prettierrc.json"
   },
   "dependencies": {
     "papaparse": "^5.7.1",
