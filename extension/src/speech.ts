@@ -1,3 +1,5 @@
+import { speechCommandHints } from './voiceguard';
+
 export type VoiceState =
   | 'Idle'
   | 'Listening'
@@ -15,6 +17,7 @@ type Recognition = {
   lang: string;
   continuous: boolean;
   interimResults: boolean;
+  phrases?: { phrase: string; boost: number }[];
   onresult: ((event: any) => void) | null;
   onerror: ((event: any) => void) | null;
   onend: (() => void) | null;
@@ -31,6 +34,10 @@ type SpeechEnvironment = {
   webkitSpeechRecognition?: RecognitionConstructor;
   speechSynthesis?: SpeechSynthesis;
   SpeechSynthesisUtterance?: typeof SpeechSynthesisUtterance;
+  SpeechRecognitionPhrase?: new (
+    phrase: string,
+    boost: number,
+  ) => { phrase: string; boost: number };
 };
 export class PrivateSpeech {
   private recognition: Recognition | null = null;
@@ -41,6 +48,7 @@ export class PrivateSpeech {
   private version = 0;
   private last = '';
   private disposed = false;
+  private hintsSupported = true;
   constructor(
     private state: (state: VoiceState, message?: string) => void,
     private command: (text: string) => Promise<void> | void,
@@ -106,6 +114,15 @@ export class PrivateSpeech {
       recognition.lang = 'en-US';
       recognition.continuous = false;
       recognition.interimResults = false;
+      if (this.hintsSupported && this.env.SpeechRecognitionPhrase && 'phrases' in recognition) {
+        try {
+          recognition.phrases = speechCommandHints.map(
+            (phrase) => new this.env.SpeechRecognitionPhrase!(phrase, 3),
+          );
+        } catch {
+          this.hintsSupported = false;
+        }
+      }
       this.recognition = recognition;
       this.session = true;
       recognition.onresult = (event) => {
@@ -122,6 +139,15 @@ export class PrivateSpeech {
       };
       recognition.onerror = (event) => {
         if (!this.session) return;
+        if (event.error === 'phrases-not-supported' && this.hintsSupported) {
+          this.hintsSupported = false;
+          recognition.phrases = [];
+          this.state(
+            'Listening',
+            'Command hints are unavailable; listening continues without them.',
+          );
+          return;
+        }
         if (event.error === 'aborted' && (this.speaking || this.processing)) return;
         if (event.error === 'no-speech') {
           this.state('Listening');

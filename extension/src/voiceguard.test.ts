@@ -11,6 +11,17 @@ it('allows only complete known commands and maps learning intents without keepin
   expect(parseCommand(' Replace it. ')).toEqual({ action: 'replace' });
   expect(parseCommand('Change.')).toEqual({ action: 'replace', applyCurrent: true });
   expect(parseCommand('change it')).toEqual({ action: 'replace', applyCurrent: true });
+  for (const phrase of [
+    'apply',
+    'apply it',
+    'please apply it',
+    'replace',
+    'replace this',
+    'change this please',
+  ])
+    expect(parseCommand(phrase)).toEqual({ action: 'replace', applyCurrent: true });
+  expect(parseCommand('next item')).toEqual({ action: 'next' });
+  expect(parseCommand('do not apply it')).toBeNull();
   expect(parseCommand('Explain the first one.')).toEqual({
     action: 'explain',
     intent: 'EXPLAIN_RISK',

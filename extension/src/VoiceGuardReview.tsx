@@ -39,7 +39,8 @@ export function VoiceGuard(props: Props) {
     [consent, setConsent] = useState(false),
     [commandText, setCommandText] = useState(''),
     [working, setWorking] = useState(false),
-    [preferencesLoaded, setPreferencesLoaded] = useState(false);
+    [preferencesLoaded, setPreferencesLoaded] = useState(false),
+    [heard, setHeard] = useState('');
   const history = useRef(new ReviewHistory()),
     heading = useRef<HTMLHeadingElement>(null),
     speech = useRef<PrivateSpeech | null>(null),
@@ -67,9 +68,13 @@ export function VoiceGuard(props: Props) {
         if (note) setMessage(note);
       },
       async (text) => {
+        setHeard(text.slice(0, 100));
         const command = parseCommand(text);
         if (command) await dispatchRef.current(command);
-        else setMessage('Command not recognized. Choose a listed command or a learning topic.');
+        else
+          setMessage(
+            'Command not recognized. Try “apply it” to replace this item, or “next item”.',
+          );
       },
     );
     const load = () =>
@@ -100,6 +105,11 @@ export function VoiceGuard(props: Props) {
       document.removeEventListener('visibilitychange', hidden);
     };
   }, []);
+  useEffect(() => {
+    if (!heard) return;
+    const timeout = window.setTimeout(() => setHeard(''), 8000);
+    return () => window.clearTimeout(timeout);
+  }, [heard]);
   useEffect(() => {
     history.current = new ReviewHistory();
     setIndex(0);
@@ -355,6 +365,14 @@ export function VoiceGuard(props: Props) {
       <p className="muted">
         Private commands. One decision at a time. Nothing is sent when you approve.
       </p>
+      <p>
+        <strong>Say “apply it” to change this item, or “next item” to continue.</strong>
+      </p>
+      {heard && (
+        <p className="notice">
+          Heard: “{heard}” <small>(shown briefly in this review only)</small>
+        </p>
+      )}
       {[
         'Language pack required',
         'Downloading language pack',

@@ -16,6 +16,29 @@ class LocalRecognition {
     LocalRecognition.instance = this;
   }
 }
+it('biases local recognition toward commands and keeps listening if hints are unsupported', async () => {
+  class HintedRecognition extends LocalRecognition {
+    phrases: { phrase: string; boost: number }[] = [];
+  }
+  class Phrase {
+    constructor(
+      public phrase: string,
+      public boost: number,
+    ) {}
+  }
+  const speech = new PrivateSpeech(vi.fn(), vi.fn(), {
+    SpeechRecognition: HintedRecognition,
+    SpeechRecognitionPhrase: Phrase,
+  });
+  await speech.start();
+  const r = LocalRecognition.instance as HintedRecognition;
+  expect(r.phrases).toContainEqual({ phrase: 'apply it', boost: 3 });
+  r.onerror({ error: 'phrases-not-supported' });
+  expect(r.phrases).toEqual([]);
+  r.onend();
+  expect(r.start.mock.calls.length).toBeGreaterThan(1);
+  speech.destroy();
+});
 it('does not start a recognizer without explicit local capability and an installed pack', async () => {
   const state = vi.fn(),
     speech = new PrivateSpeech(state, vi.fn(), {});

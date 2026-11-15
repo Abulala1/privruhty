@@ -79,13 +79,36 @@ const questions: Record<string, Intent> = {
   'explain it more simply': 'SIMPLIFY',
   'give an example': 'GIVE_EXAMPLE',
 };
+export const applyPhrases = [
+  'change',
+  'change it',
+  'change this',
+  'apply',
+  'apply it',
+  'apply change',
+  'apply this change',
+  'replace',
+  'replace this',
+];
+export const speechCommandHints = [
+  ...applyPhrases,
+  'next',
+  'next item',
+  'keep it',
+  'undo',
+  'previous',
+  'stop',
+];
 export function parseCommand(value: string): Command | null {
   const text = value
     .toLowerCase()
     .trim()
     .replace(/[.!?]+$/, '')
-    .replace(/\s+/g, ' ');
-  if (text === 'change' || text === 'change it') return { action: 'replace', applyCurrent: true };
+    .replace(/\s+/g, ' ')
+    .replace(/^please /, '')
+    .replace(/ please$/, '');
+  if (applyPhrases.includes(text)) return { action: 'replace', applyCurrent: true };
+  if (text === 'next item' || text === 'go next') return { action: 'next' };
   if (commands[text]) return { action: commands[text] };
   if (questions[text]) return { action: 'explain', intent: questions[text] };
   const numbered = /^explain (?:the )?(first|second|third|fourth|fifth|\d+)(?: one| item)?$/.exec(
