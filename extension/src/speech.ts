@@ -123,8 +123,14 @@ export class PrivateSpeech {
     try {
       this.recognition?.start();
       this.state('Listening');
-    } catch {
-      /* Already running; never fall back to a remote recognizer. */
+    } catch (error) {
+      // A running recognizer may reject another start; other failures must be visible.
+      if (error instanceof DOMException && error.name === 'InvalidStateError') return;
+      this.stop();
+      this.state(
+        'Error',
+        'Chrome could not start local listening. Allow microphone access, then choose Start private voice.',
+      );
     }
   }
   stop() {

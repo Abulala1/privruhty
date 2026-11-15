@@ -25,7 +25,7 @@ export function VoiceGuardSettings() {
       <h2>VoiceGuard accessibility</h2>
       <p>
         Voice commands use on-device English recognition only. No audio or transcripts are uploaded.
-        Start listening explicitly from a review.
+        Enabled reviews attempt local listening when opened. Stop listening at any time.
       </p>
       {(
         [

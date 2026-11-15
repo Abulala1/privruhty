@@ -18,6 +18,9 @@ document.documentElement.append(style);
 
 let editor: HTMLElement | null = null;
 let shield: HTMLButtonElement | null = null;
+let speechButton: HTMLButtonElement | null = null;
+let shieldPosition: { x: number; y: number } | null = null;
+let shieldDragged = false;
 let panel: HTMLDivElement | null = null;
 let popup: HTMLDivElement | null = null;
 let current: Scan | null = null;
@@ -85,7 +88,7 @@ function baseCard(card: HTMLElement) {
 }
 function isOwnUI(element: Element) {
   return !!element.closest(
-    '#pribruhty-ui,#pribruhty-suggestion,#pribruhty-page-view,#privruhty-attachments',
+    '#pribruhty-ui,#pribruhty-suggestion,#pribruhty-page-view,#privruhty-attachments,#privruhty-shield,#privruhty-speech',
   );
 }
 function isEditor(element: Element) {
@@ -223,9 +226,20 @@ function position() {
   if (!editor) return;
   const rect = editor.getBoundingClientRect();
   if (shield) {
-    shield.style.left = Math.max(8, Math.min(innerWidth - 60, rect.right - 44)) + 'px';
-    shield.style.top = Math.max(8, Math.min(innerHeight - 46, rect.top - 42)) + 'px';
+    const point = clampPoint(
+      shieldPosition?.x ?? rect.right - 92,
+      shieldPosition?.y ?? rect.top - 42,
+      100,
+      38,
+    );
+    shield.style.left = point.x + 'px';
+    shield.style.top = point.y + 'px';
     shield.hidden = !value(editor).trim();
+    if (speechButton) {
+      speechButton.hidden = shield.hidden;
+      speechButton.style.left = point.x + 58 + 'px';
+      speechButton.style.top = point.y + 'px';
+    }
   }
   if (panel && !dragging) {
     const width = Math.min(370, innerWidth - 24);
@@ -298,6 +312,8 @@ function mount() {
   shield.textContent = '🛡';
   shield.title = 'Privruhty review';
   shield.setAttribute('aria-label', 'Open Privruhty review');
+  shield.id = 'privruhty-shield';
+  shield.title = 'Drag to move; arrow keys move; click to review suggestions.';
   css(shield, {
     position: 'fixed',
     zIndex: '2147483646',
@@ -307,15 +323,94 @@ function mount() {
     borderRadius: '24px',
     width: '40px',
     height: '38px',
-    cursor: 'pointer',
+    cursor: 'grab',
+    touchAction: 'none',
     boxShadow: '0 4px 16px #0003',
     font: '14px system-ui',
   });
-  shield.onclick = () => {
+  shield.addEventListener('pointerdown', (event) => {
+    if (event.button !== 0 || !shield) return;
+    event.preventDefault();
+    const button = shield,
+      rect = button.getBoundingClientRect(),
+      x = event.clientX,
+      y = event.clientY;
+    shieldDragged = false;
+    button.setPointerCapture(event.pointerId);
+    const move = (next: PointerEvent) => {
+      if (Math.hypot(next.clientX - x, next.clientY - y) < 5 && !shieldDragged) return;
+      shieldDragged = true;
+      shieldPosition = clampPoint(
+        rect.left + next.clientX - x,
+        rect.top + next.clientY - y,
+        100,
+        38,
+      );
+      position();
+    };
+    const end = () => {
+      button.removeEventListener('pointermove', move);
+      button.removeEventListener('pointerup', end);
+      button.removeEventListener('pointercancel', end);
+      button.removeEventListener('lostpointercapture', end);
+    };
+    button.addEventListener('pointermove', move);
+    button.addEventListener('pointerup', end);
+    button.addEventListener('pointercancel', end);
+    button.addEventListener('lostpointercapture', end);
+  });
+  shield.addEventListener('keydown', (event) => {
+    const delta: Record<string, [number, number]> = {
+      ArrowLeft: [-1, 0],
+      ArrowRight: [1, 0],
+      ArrowUp: [0, -1],
+      ArrowDown: [0, 1],
+    };
+    if (!delta[event.key] || !shield) return;
+    event.preventDefault();
+    const rect = shield.getBoundingClientRect(),
+      step = event.shiftKey ? 30 : 10;
+    shieldPosition = clampPoint(
+      rect.left + delta[event.key][0] * step,
+      rect.top + delta[event.key][1] * step,
+      100,
+      38,
+    );
+    position();
+  });
+  shield.onclick = (event) => {
+    if (shieldDragged && event.detail !== 0) {
+      shieldDragged = false;
+      return;
+    }
     dismissed = false;
     showReview();
   };
   document.documentElement.append(shield);
+  speechButton = document.createElement('button');
+  speechButton.id = 'privruhty-speech';
+  speechButton.type = 'button';
+  speechButton.textContent = '🎙';
+  speechButton.setAttribute('aria-label', 'Open speech mode');
+  speechButton.title = 'Speech mode: say change, next, keep, or undo.';
+  css(speechButton, {
+    position: 'fixed',
+    zIndex: '2147483646',
+    width: '38px',
+    height: '38px',
+    borderRadius: '50%',
+    background: '#176952',
+    color: '#fff',
+    border: '1px solid #8db9a4',
+    cursor: 'pointer',
+    font: '18px system-ui',
+    boxShadow: '0 4px 16px #0003',
+  });
+  speechButton.onclick = () => {
+    dismissed = false;
+    showReview(true);
+  };
+  document.documentElement.append(speechButton);
 }
 function markedPreview(parent: HTMLElement, text: string, spans: Span[]) {
   parent.replaceChildren();
@@ -364,7 +459,7 @@ function applyApproved(spans: Span[], expected: string) {
   setValue(editor, next);
 }
 
-function showReview() {
+function showReview(speechMode = false) {
   if (disposed || !editor || dragging) return;
   const text = value(editor);
   if (text !== source || !current) return;
@@ -544,6 +639,7 @@ function showReview() {
     void contentRuntime.send({ kind: 'open-bank' });
   };
   position();
+  if (speechMode) voice.click();
 }
 
 function hitAt(x: number, y: number) {
@@ -747,6 +843,8 @@ const hostObserver = new MutationObserver(() => {
     current = null;
     shield?.remove();
     shield = null;
+    speechButton?.remove();
+    speechButton = null;
     panel?.remove();
     panel = null;
     hidePopup();
@@ -818,6 +916,8 @@ contentRuntime.onInvalidated(() => {
   panel = null;
   shield?.remove();
   shield = null;
+  speechButton?.remove();
+  speechButton = null;
   style.remove();
   current = null;
   source = '';

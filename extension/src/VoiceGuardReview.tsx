@@ -37,7 +37,8 @@ export function VoiceGuard(props: Props) {
     [source, setSource] = useState('Local explanation'),
     [consent, setConsent] = useState(false),
     [commandText, setCommandText] = useState(''),
-    [working, setWorking] = useState(false);
+    [working, setWorking] = useState(false),
+    [preferencesLoaded, setPreferencesLoaded] = useState(false);
   const history = useRef(new ReviewHistory()),
     heading = useRef<HTMLHeadingElement>(null),
     speech = useRef<PrivateSpeech | null>(null),
@@ -71,8 +72,15 @@ export function VoiceGuard(props: Props) {
       },
     );
     const load = () =>
-      void chrome.storage.local.get('voiceguard').then((value) => {
-        if (alive.current) setPrefs(preferences(value.voiceguard));
+      void contentRuntime.send({ kind: 'voiceguard-preferences' }).then((value) => {
+        if (alive.current) {
+          if (!value || value.error) {
+            setMessage('Voice settings unavailable. Refresh the tab to reconnect Privruhty.');
+            return;
+          }
+          setPrefs(preferences(value));
+          setPreferencesLoaded(true);
+        }
       });
     load();
     const changed = (changes: Record<string, chrome.storage.StorageChange>) => {
@@ -99,8 +107,10 @@ export function VoiceGuard(props: Props) {
     props.onApproved(false);
   }, [props.text, props.result]);
   useEffect(() => {
-    if (!prefs.enabled) speech.current?.stop();
-  }, [prefs.enabled]);
+    if (preferencesLoaded && prefs.enabled && !document.hidden) void speech.current?.start();
+    else speech.current?.stop();
+    return () => speech.current?.stop();
+  }, [prefs.enabled, preferencesLoaded]);
   useEffect(() => {
     if (current) {
       setExplanation(
@@ -115,7 +125,7 @@ export function VoiceGuard(props: Props) {
   }
   function save(next: Preferences) {
     setPrefs(next);
-    void chrome.storage.local.set({ voiceguard: next });
+    void contentRuntime.send({ kind: 'voiceguard-preferences', value: next });
   }
   function change(values: boolean[], nextIndex = index) {
     history.current.record(snapshot());
@@ -311,7 +321,26 @@ export function VoiceGuard(props: Props) {
       <style>{voiceguardCSS}</style>
       <div className="section-heading">
         <h2>VoiceGuard</h2>
-        <span className="pill">{voiceState}</span>
+        <div className="row">
+          <button
+            type="button"
+            aria-label={
+              ['Listening', 'Processing', 'Speaking'].includes(voiceState)
+                ? 'Stop speech mode'
+                : 'Start speech mode'
+            }
+            aria-pressed={['Listening', 'Processing', 'Speaking'].includes(voiceState)}
+            title="Toggle private speech mode"
+            onClick={() =>
+              ['Listening', 'Processing', 'Speaking'].includes(voiceState)
+                ? speech.current?.stop()
+                : void speech.current?.start()
+            }
+          >
+            <span aria-hidden="true">🎙</span>
+          </button>
+          <span className="pill">{voiceState}</span>
+        </div>
       </div>
       <p className="muted">
         Private commands. One decision at a time. Nothing is sent when you approve.
@@ -471,15 +500,20 @@ export function VoiceGuard(props: Props) {
           ))}
         </div>
       </details>
-      <details>
-        <summary>Voice and keyboard controls</summary>
+      <details open>
+        <summary>
+          <span aria-hidden="true">🎙 </span>Voice and keyboard controls
+        </summary>
         <p>
-          Start a private voice session explicitly. It runs only in this visible review, for up to
-          five minutes. Stop at any time. Local English recognition and an installed language pack
-          are required.
+          Speech mode starts when this review opens, if supported and permitted. Say “change” to
+          select the current replacement or “next” to move to the next finding. It runs only in this
+          visible review for up to five minutes. Stop at any time. Local English recognition and an
+          installed language pack are required. Chrome may ask for microphone permission.
         </p>
         <div className="row">
-          <button onClick={() => void speech.current?.start()}>Start private voice</button>
+          <button onClick={() => void speech.current?.start()}>
+            <span aria-hidden="true">🎙 </span>Start private voice
+          </button>
           <button onClick={() => speech.current?.stop()}>Stop listening</button>
           <button className="secondary" onClick={() => void speech.current?.install()}>
             Install local English pack
@@ -508,8 +542,8 @@ export function VoiceGuard(props: Props) {
           />
         </label>
         <p>
-          Say: scan my message, read my warnings, explain this, replace it, keep it, next, previous,
-          replace all names, undo, redo, repeat, read the message, approve, cancel, stop.
+          Say: change, scan my message, read my warnings, explain this, replace it, keep it, next,
+          previous, replace all names, undo, redo, repeat, read the message, approve, cancel, stop.
         </p>
         <p>
           Keyboard: Tab and Enter operate all controls. Alt + Right / Left changes the item. Alt +

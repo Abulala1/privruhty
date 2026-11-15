@@ -60,7 +60,6 @@ test('VoiceGuard keyboard review, local speech fallback, approval invalidation, 
     await review.getByRole('button', { name: 'Explain', exact: true }).focus();
     await page.keyboard.press('Enter');
     await expect(review.getByRole('status')).toContainText('An email address');
-    await review.getByText('Voice and keyboard controls', { exact: true }).click();
     // Deliberately remove local API support in this synthetic browser fixture.
     await page.evaluate(() => {
       Object.defineProperty(window, 'SpeechRecognition', { value: undefined, configurable: true });
@@ -168,8 +167,7 @@ test('VoiceGuard dispatches local speech commands and stops after cancellation (
       .getByRole('textbox', { name: 'Private draft', exact: true })
       .fill('Email alice@example.com or call 415-555-0199.');
     const review = page.getByRole('region', { name: 'VoiceGuard accessible privacy review' });
-    await review.getByText('Voice and keyboard controls', { exact: true }).click();
-    await review.getByRole('button', { name: 'Start private voice', exact: true }).click();
+    await expect(review.getByRole('status')).toContainText('Listening');
     const say = async (text: string) =>
       page.evaluate((text) => {
         const r = (window as any).__testRecognition;
@@ -182,7 +180,7 @@ test('VoiceGuard dispatches local speech commands and stops after cancellation (
     await expect(page.locator('pre')).toContainText('EMAIL_1');
     await say('redo');
     await expect(page.locator('pre')).toContainText('alice@example.com');
-    await say('replace it');
+    await say('change');
     await expect(page.locator('pre')).not.toContainText('alice@example.com');
     await say('next');
     await expect(review.getByRole('heading', { level: 3 })).toContainText('PHONE');
@@ -390,6 +388,21 @@ test('readable dark-theme highlights, draggable review, and hover approval for i
     const review = page.locator('#pribruhty-ui');
     await expect(review).toBeVisible();
     await expect(review).toContainText('bob@example.com');
+    const shield = page.getByRole('button', { name: 'Open Privruhty review', exact: true });
+    const badgeBefore = (await shield.boundingBox())!;
+    await page.mouse.move(badgeBefore.x + 15, badgeBefore.y + 15);
+    await page.mouse.down();
+    await page.mouse.move(badgeBefore.x - 90, badgeBefore.y - 65, { steps: 10 });
+    await page.mouse.up();
+    expect(Math.round((await shield.boundingBox())!.x)).toBe(Math.round(badgeBefore.x - 105));
+    // Dragging must not activate speech review; the legacy suggestion panel stays visible.
+    await expect(page.getByRole('button', { name: 'Move review panel' })).toBeVisible();
+    await shield.focus();
+    await shield.press('ArrowRight');
+    const badgePinned = (await shield.boundingBox())!;
+    await page.evaluate(() => window.dispatchEvent(new Event('resize')));
+    expect(Math.round((await shield.boundingBox())!.x)).toBe(Math.round(badgePinned.x));
+    await expect(page.getByRole('button', { name: 'Open speech mode', exact: true })).toBeVisible();
     const colors = await editor.evaluate((el) => {
       const s = getComputedStyle(el, '::highlight(pribruhty-sensitive)');
       return { foreground: s.color, background: s.backgroundColor };
@@ -469,6 +482,17 @@ test('readable dark-theme highlights, draggable review, and hover approval for i
     expect(resized.x).toBeGreaterThanOrEqual(8);
     expect(resized.x + resized.width).toBeLessThanOrEqual(892);
     expect(resized.y + resized.height).toBeLessThanOrEqual(642);
+    await page.getByRole('button', { name: 'Open speech mode', exact: true }).click();
+    const speechReview = page.getByRole('region', { name: 'VoiceGuard accessible privacy review' });
+    await expect(speechReview).toBeVisible();
+    await expect(
+      speechReview.getByRole('button', { name: 'Start private voice', exact: true }),
+    ).toBeVisible();
+    await expect(speechReview).toContainText('Say “change”');
+    await expect(speechReview.getByRole('status')).toContainText(
+      /Listening|unavailable|permission|could not|recognition stopped/,
+    );
+    await page.screenshot({ path: 'test-results/draggable-shield-speech.png' });
   } finally {
     await context.close();
     await cleanProfile(profile);

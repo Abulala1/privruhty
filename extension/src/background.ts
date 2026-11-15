@@ -17,7 +17,7 @@ import {
   type Envelope,
 } from './crypto';
 import { supportedPage, pageScope, restorePageBatch, type PageGrant } from './pageView';
-import { categories, validateExplanation } from './voiceguard';
+import { categories, validateExplanation, preferences, defaultPreferences } from './voiceguard';
 import { attachmentPreferences } from './attachmentPolicy';
 import { detectorConnection } from './detector';
 
@@ -89,6 +89,16 @@ async function run(message: any, sender: chrome.runtime.MessageSender) {
       session: bankSession,
       scope: await attachmentScope(),
     };
+  }
+  if (message.kind === 'voiceguard-preferences') {
+    if (!ui && !contentPage) throw new Error('Unsupported review context.');
+    const stored = await chrome.storage.local.get('voiceguard');
+    const value = preferences(message.value ?? stored.voiceguard);
+    const clean = Object.fromEntries(
+      Object.keys(defaultPreferences).map((key) => [key, value[key as keyof typeof value]]),
+    );
+    if (message.value !== undefined) await chrome.storage.local.set({ voiceguard: clean });
+    return clean;
   }
   if (message.kind === 'open-documents') {
     if (!ui && !contentPage) throw new Error('Unsupported attachment context.');
